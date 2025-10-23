@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HABItar • Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --brand-green: #22c55e;
+            --brand-green-600: #16a34a;
+            --brand-green-100: #e9f9ef;
+            --brand-green-50: #f3fcf6;
+            --soft-gray: #f6f7f9;
+            --surface: #fff;
+            --border: #e9ecf1;
+            --muted: #98a2b3;
+            --text: #0f172a;
+            --grad-accent: linear-gradient(135deg, rgba(34, 197, 94, .12), rgba(34, 197, 94, .04))
+        }
+
+        body {
+            font-family: 'Inter', system-ui;
+            background: radial-gradient(900px 500px at 120% 10%, var(--brand-green-50), transparent), var(--soft-gray);
+            color: var(--text)
+        }
+
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: 280px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1030
+        }
+
+        .sidebar.mini {
+            width: 88px;
+            align-items: center
+        }
+
+        .brand {
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem
+        }
+
+        .brand .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: var(--brand-green);
+            box-shadow: 0 0 0 6px var(--brand-green-100)
+        }
+
+        .brand-text {
+            display: inline
+        }
+
+        .nav-subtitle {
+            text-transform: uppercase;
+            font-size: .72rem;
+            color: var(--muted);
+            margin: 8px 0 4px;
+            letter-spacing: .08em
+        }
+
+        .nav-link-custom {
+            border-radius: 12px;
+            padding: 10px 12px;
+            color: var(--text);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: transform .18s, background-color .25s, box-shadow .25s
+        }
+
+        .nav-link-custom:hover {
+            background: var(--brand-green-100);
+            transform: translateX(2px);
+            box-shadow: inset 0 0 0 1px rgba(34, 197, 94, .25);
+            text-decoration: none
+        }
+
+        .nav-link-custom.active {
+            background: var(--grad-accent);
+            box-shadow: inset 0 0 0 1px rgba(34, 197, 94, .25);
+            text-decoration: none
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 10px 0
+        }
+
+        .sidebar.mini .label,
+        .sidebar.mini .nav-subtitle,
+        .sidebar.mini .divider,
+        .sidebar.mini #collapseNav .label {
+            display: none !important
+        }
+
+        .sidebar.mini .brand-text {
+            display: none !important
+        }
+
+        .sidebar.mini .nav-link-custom {
+            justify-content: center;
+            padding: 10px
+        }
+
+        .content {
+            margin-left: 280px;
+            padding: 28px
+        }
+
+        .sidebar.mini~.content {
+            margin-left: 88px
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+            height: 100%
+        }
+
+        .kpi-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--brand-green-100);
+            display: grid;
+            place-items: center;
+            margin-bottom: 8px
+        }
+
+        .kpi-value {
+            font-size: 1.7rem;
+            font-weight: 900;
+            letter-spacing: -.02em
+        }
+
+        .kpi-label {
+            color: var(--muted);
+            font-size: .9rem;
+            font-weight: 600
+        }
+
+        .btn-brand {
+            background: var(--brand-green);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: .625rem 1rem
+        }
+
+        .btn-brand:hover {
+            background: var(--brand-green-600)
+        }
+
+        .card-soft {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 18px
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 320px;
+        }
+
+        /* altura fixa para evitar scroll infinito */
+
+        @media (max-width:992px) {
+            .sidebar {
+                position: sticky;
+                top: 0;
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border)
+            }
+
+            .content {
+                margin-left: 0;
+                padding: 18px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand"><span class="dot"></span> <span class="brand-text">HABItar</span></div>
+        <div class="divider"></div>
+
+        <div class="nav-subtitle">Geral</div>
+        <a class="nav-link-custom active" href="./dashboard.html"><i class="bi bi-speedometer"></i> <span
+                class="label">Dashboard</span></a>
+        <a class="nav-link-custom" href="./index.html"><i class="bi bi-people"></i> <span
+                class="label">Equipe</span></a>
+
+        <div class="nav-subtitle mt-2">Clientes</div>
+        <a class="nav-link-custom" href="./clientes-gerenciar.html"><i class="bi bi-person-lines-fill"></i> <span
+                class="label">Gerenciar</span></a>
+
+        <div class="nav-subtitle mt-2">Obras</div>
+        <a class="nav-link-custom" href="./obras-gerenciar.html"><i class="bi bi-hammer"></i> <span
+                class="label">Gerenciar</span></a>
+        <a class="nav-link-custom" href="./gerar-orcamento.html"><i class="bi bi-receipt"></i> <span class="label">Gerar
+                Orçamento</span></a>
+
+        <div class="nav-subtitle mt-2">Financeiro</div>
+        <a class="nav-link-custom" href="./financeiro-faturamento.html"><i class="bi bi-cash-coin"></i> <span
+                class="label">Faturamento</span></a>
+        <a class="nav-link-custom" href="./financeiro-estatisticas.html"><i class="bi bi-graph-up-arrow"></i> <span
+                class="label">Estatísticas</span></a>
+
+        <div class="divider"></div>
+        <a class="nav-link-custom" href="#" id="collapseNav"><i class="bi bi-chevron-left"></i> <span
+                class="label">Recolher navbar</span></a>
+    </aside>
+
+    <!-- Conteúdo -->
+    <main class="content px-3 px-lg-4">
+        <!-- Header responsivo só com utilitários Bootstrap -->
+        <header
+            class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 gap-md-3 mb-3">
+            <div class="text-center text-md-start">
+                <h1 class="h3 mb-1">Dashboard</h1>
+                <div class="text-muted">Visão geral de obras, clientes e financeiro.</div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
+                <a class="btn btn-brand" href="./obras-gerenciar.html"><i class="bi bi-hammer"></i> Nova obra</a>
+                <a class="btn btn-outline-success" href="./clientes-gerenciar.html"><i class="bi bi-person-plus"></i>
+                    Novo cliente</a>
+            </div>
+        </header>
+
+        <!-- KPIs -->
+        <section class="row g-3 mb-3">
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="kpi-card h-100">
+                    <div class="kpi-icon"><i class="bi bi-clipboard-check"></i></div>
+                    <div class="kpi-value" id="kpiObras">0</div>
+                    <div class="kpi-label">Obras ativas</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="kpi-card h-100">
+                    <div class="kpi-icon"><i class="bi bi-graph-up"></i></div>
+                    <div class="kpi-value" id="kpiProgresso">0%</div>
+                    <div class="kpi-label">Progresso médio (obras)</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="kpi-card h-100">
+                    <div class="kpi-icon"><i class="bi bi-people"></i></div>
+                    <div class="kpi-value" id="kpiClientes">0</div>
+                    <div class="kpi-label">Clientes ativos</div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="kpi-card h-100">
+                    <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
+                    <div class="kpi-value" id="kpiReceita">R$ 0,00</div>
+                    <div class="kpi-label">Receita (mês)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gráficos -->
+        <section class="row g-3">
+            <div class="col-12 col-xl-6">
+                <div class="card-soft p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="fw-semibold">Receitas x Despesas (últimos 6 meses)</div>
+                        <a href="./financeiro-estatisticas.html" class="text-success small">Ver estatísticas</a>
+                    </div>
+                    <div class="chart-wrap"><canvas id="chartCashflow"></canvas></div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-6">
+                <div class="card-soft p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="fw-semibold">Status das Obras</div>
+                        <a href="./obras-gerenciar.html" class="text-success small">Ir para obras</a>
+                    </div>
+                    <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Listas rápidas -->
+        <section class="row g-3 mt-3">
+            <div class="col-12 col-xl-6">
+                <div class="card-soft p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="fw-semibold">Obras Recentes</div>
+                        <a href="./obras-gerenciar.html" class="text-success small">Ver todas</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Obra/Cliente</th>
+                                    <th>Início</th>
+                                    <th>Status</th>
+                                    <th>Progresso</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyObras">
+                                <tr>
+                                    <td colspan="4" class="text-muted py-3 text-center">Carregando…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-6">
+                <div class="card-soft p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="fw-semibold">Clientes Recentes</div>
+                        <a href="./clientes-gerenciar.html" class="text-success small">Ver todos</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Contato</th>
+                                    <th>Criado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyClientes">
+                                <tr>
+                                    <td colspan="3" class="text-muted py-3 text-center">Carregando…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="/assets/js/auth.js"></script>
+    <script>
+        if (!window.Auth.requireAuth()) { /* bloqueia execução restante */ }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            'use strict';
+            function $(s, c) { return (c || document).querySelector(s); }
+            function api(url) { return fetch(url).then(r => { if (!r.ok) return r.text().then(t => { throw new Error('HTTP ' + r.status + ' ' + t) }); return r.json(); }); }
+            function currency(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+            function dateBR(d) { try { return new Date(d).toLocaleDateString('pt-BR'); } catch (_e) { return '-'; } }
+
+            const els = {
+                kpiObras: $('#kpiObras'),
+                kpiProgresso: $('#kpiProgresso'),
+                kpiClientes: $('#kpiClientes'),
+                kpiReceita: $('#kpiReceita'),
+                tbodyObras: $('#tbodyObras'),
+                tbodyClientes: $('#tbodyClientes'),
+                collapseNav: $('#collapseNav')
+            };
+
+            const API = {
+                works: '/api/works',
+                clients: '/api/clients',
+                finance: '/api/finance/summary?window=6m' // se não existir, mockaremos
+            };
+
+            function renderKPIs(works, clients, finance) {
+                const ativas = (works || []).filter(w => w.status !== 'Concluida').length;
+                const media = (works || []).length ? Math.round((works || []).reduce((a, w) => a + Number(w.progressPercent || 0), 0) / (works || []).length) : 0;
+                els.kpiObras.textContent = ativas;
+                els.kpiProgresso.textContent = media + '%';
+                els.kpiClientes.textContent = (clients || []).filter(c => c.status === 'Ativo').length;
+                const receitaMes = finance?.currentMonth?.income ?? 0;
+                els.kpiReceita.textContent = currency(receitaMes);
+            }
+
+            function renderTables(works, clients) {
+                const wRows = (works || []).slice(0, 5).map(w => {
+                    const prog = Number(w.progressPercent || 0);
+                    const name = (w.title || w.clientSnapshot?.name || '—');
+                    const status = w.status || '—';
+                    return '<tr>' +
+                        '<td>' + name + '</td>' +
+                        '<td>' + dateBR(w.createdAt || new Date()) + '</td>' +
+                        '<td><span class="badge ' + (status === 'Concluida' ? 'bg-success-subtle text-success' : status === 'Pausada' ? 'bg-warning-subtle text-warning' : 'bg-primary-subtle text-primary') + '">' + status + '</span></td>' +
+                        '<td style="min-width:180px"><div class="progress" style="height:8px"><div class="progress-bar" style="width:' + prog + '%"></div></div><div class="small text-muted mt-1">' + prog + '%</div></td>' +
+                        '</tr>';
+                }).join('') || '<tr><td colspan="4" class="text-muted text-center py-3">Sem obras.</td></tr>';
+                els.tbodyObras.innerHTML = wRows;
+
+                const cRows = (clients || []).slice(0, 6).map(c => {
+                    return '<tr><td>' + (c.name || '—') + '</td><td>' + (c.email || '—') + '</td><td>' + dateBR(c.createdAt) + '</td></tr>';
+                }).join('') || '<tr><td colspan="3" class="text-muted text-center py-3">Sem clientes.</td></tr>';
+                els.tbodyClientes.innerHTML = cRows;
+            }
+
+            function buildCharts(finance, works) {
+                const el1 = document.getElementById('chartCashflow');
+                if (el1) {
+                    const labels = finance?.months || ['Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out'];
+                    const income = finance?.income || [12000, 15000, 18000, 16000, 21000, 24000];
+                    const expense = finance?.expense || [8000, 9000, 11000, 10000, 12000, 15000];
+                    new Chart(el1, {
+                        type: 'line',
+                        data: {
+                            labels, datasets: [
+                                { label: 'Receitas', data: income, tension: .35, borderWidth: 2, fill: false },
+                                { label: 'Despesas', data: expense, tension: .35, borderWidth: 2, fill: false }
+                            ]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+                    });
+                }
+                const el2 = document.getElementById('chartStatus');
+                if (el2) {
+                    const total = works || [];
+                    const emAnd = total.filter(w => w.status === 'Em andamento').length;
+                    const conc = total.filter(w => w.status === 'Concluida').length;
+                    const paus = total.filter(w => w.status === 'Pausada').length;
+                    new Chart(el2, {
+                        type: 'doughnut',
+                        data: { labels: ['Em andamento', 'Concluídas', 'Pausadas'], datasets: [{ data: [emAnd, conc, paus] }] },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                    });
+                }
+            }
+
+            function refresh() {
+                Promise.all([
+                    api(API.works).then(r => r.data || r).catch(() => []),
+                    api(API.clients).then(r => r.data || r).catch(() => []),
+                    api(API.finance).catch(() => ({ months: null, income: null, expense: null, currentMonth: { income: 0 } }))
+                ]).then(([works, clients, finance]) => {
+                    renderKPIs(works, clients, finance);
+                    renderTables(works, clients);
+                    buildCharts(finance, works);
+                }).catch(err => console.error(err));
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const c = $('#collapseNav');
+                if (c) { c.addEventListener('click', function (ev) { ev.preventDefault(); document.querySelector('.sidebar').classList.toggle('mini'); }); }
+                refresh();
+            });
+        })();
+    </script>
+</body>
+
+</html>

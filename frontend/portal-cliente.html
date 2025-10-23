@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>HABItar • Portal do Cliente (Light+Responsive)</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ========= Design tokens ========= */
+    :root{
+      /* Cores claras */
+      --bg:#f7f8fa; --surface:#fff; --surface-2:#fff;
+      --border:#e6ebf2; --text:#0f172a; --muted:#667085;
+      --brand:#22c55e; --brand-600:#16a34a; --brand-50:#ecfdf3; --brand-100:#d7f7e3;
+
+      /* Espaçamento e raios */
+      --tap:48px; --radius:16px; --radius-sm:12px;
+      --s-1:6px; --s-2:10px; --s-3:14px; --s-4:18px; --s-5:22px; --s-6:28px;
+
+      /* Sombra */
+      --shadow:0 10px 30px rgba(2,8,23,.08);
+
+      /* Tipos fluidos */
+      --fs-1: clamp(15px, 1.1vw + 13px, 17px);
+      --fs-2: clamp(17px, 1.3vw + 15px, 19px);
+      --fs-3: clamp(19px, 1.5vw + 17px, 21px);
+      --lh: 1.38;
+    }
+
+    /* Micro-ajuste para telas muito estreitas (≤360px) */
+    @media (max-width: 360px){
+      :root{ --tap:44px; --s-2:8px; --s-3:12px; --s-4:16px; }
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      font-size:var(--fs-1); line-height:var(--lh);
+      background:
+        radial-gradient(700px 400px at 120% -10%, rgba(34,197,94,.10), transparent),
+        radial-gradient(600px 300px at -10% 110%, rgba(14,165,233,.10), transparent),
+        var(--bg);
+      color:var(--text);
+      -webkit-tap-highlight-color: transparent;
+      margin:0;
+    }
+    a{color:inherit;text-decoration:none}
+
+    /* ========= App shell ========= */
+    .app{min-height:100%; display:flex; flex-direction:column;}
+
+    .wrapper{
+      /* limite suave em telas largas, mantendo mobile-first */
+      width:100%;
+      margin:0 auto;
+      max-width:1100px;
+    }
+
+    .appbar{
+      position:sticky; top:0; z-index:60;
+      display:flex; align-items:center; justify-content:space-between; gap:var(--s-2);
+      padding: calc(var(--s-3) + env(safe-area-inset-top)) var(--s-4);
+      background: linear-gradient(180deg, rgba(34,197,94,.10), transparent 70%), var(--surface);
+      border-bottom:1px solid var(--border);
+      backdrop-filter: saturate(110%) blur(6px);
+    }
+    .brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:var(--fs-2)}
+    .brand .dot{width:10px;height:10px;border-radius:999px;background:var(--brand);box-shadow:0 0 0 6px rgba(34,197,94,.18)}
+    .hey{color:var(--muted)}
+
+    /* ========= Filtros rápidos ========= */
+    .filters{
+      position:sticky; top: calc(56px + env(safe-area-inset-top)); z-index:55;
+      background: linear-gradient(180deg, var(--surface), rgba(255,255,255,.9));
+      border-bottom:1px solid var(--border);
+      padding: var(--s-2) var(--s-4);
+    }
+    .seg{
+      display:flex; gap:6px; padding:6px;
+      background:#fff; border:1px solid var(--border); border-radius:999px;
+      box-shadow:0 1px 0 rgba(15,23,42,.03); overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .seg button{
+      min-height:var(--tap); padding:0 var(--s-3);
+      border:none; border-radius:999px; cursor:pointer;
+      background:transparent; color:var(--muted); font-weight:700; white-space:nowrap;
+    }
+    .seg button.active{ background:var(--brand-50); color:#065f46; }
+    .seg .all.active{ background:linear-gradient(180deg, #fff, var(--brand-50)); }
+
+    /* ========= Busca ========= */
+    .search-wrap{padding: var(--s-2) var(--s-4); background:transparent}
+    .input{
+      display:flex; align-items:center; gap:10px;
+      border:1px solid var(--border); border-radius:999px; padding:0 var(--s-3); background:var(--surface);
+      min-height:var(--tap); box-shadow:0 1px 0 rgba(15,23,42,.03);
+    }
+    .input input{
+      flex:1; border:none; outline:none; font-size:16px; /* evita zoom iOS */
+      background:transparent; color:inherit;
+    }
+    .btn-ico{
+      width:var(--tap); height:var(--tap); display:grid; place-items:center;
+      border:1px solid var(--border); border-radius:12px; background:#fff;
+    }
+
+    /* ========= Layout principal ========= */
+    .layout{
+      display:grid; gap:var(--s-4);
+      grid-template-columns: 1fr; /* mobile */
+      padding: 0 var(--s-4) var(--s-6);
+    }
+
+    /* Desktop/tablet divide */
+    @media (min-width: 992px){
+      .layout{ grid-template-columns: 380px 1fr; }
+    }
+
+    /* ========= Lista ========= */
+    .list{padding-bottom: calc(90px + env(safe-area-inset-bottom));}
+    .work{
+      width:100%; border:1px solid var(--border); border-radius:var(--radius);
+      background:#fff; box-shadow:var(--shadow);
+      padding:var(--s-3); margin: var(--s-2) 0; text-align:left;
+      transition: transform .1s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .work:active{ transform: scale(.996) translateY(1px); }
+    .w-title{font-weight:800; font-size:var(--fs-2); letter-spacing:-.01em; margin:0 0 2px}
+    .muted{color:var(--muted)}
+    .badge-st{font-size:.74rem; font-weight:800; border-radius:999px; padding:.35rem .6rem; white-space:nowrap}
+    .st-Em\ andamento{background:#e0f2fe;color:#075985}
+    .st-Concluida{background:#dcfce7;color:#166534}
+    .st-Pausada{background:#fff7ed;color:#9a3412}
+    .progress{height:8px;border-radius:999px;background:#f1f4f8; overflow:hidden; margin-top:8px}
+    .bar{height:100%; background:var(--brand); width:0%}
+    .work-meta{margin-top:6px}
+
+    /* Skeletons (light) */
+    .skel{position:relative;overflow:hidden;background:#f3f6fb;border-radius:var(--radius);height:88px;border:1px solid var(--border);box-shadow:var(--shadow);margin:var(--s-2) 0}
+    .skel::after{content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent); transform:translateX(-100%); animation:shimmer 1.1s infinite; opacity:.8}
+    @keyframes shimmer{to{transform:translateX(100%)}}
+
+    /* ========= Detalhes (sheet) ========= */
+    .sheet{
+      position:fixed; inset:0; z-index:80; background:#fff;
+      transform:translateX(100%); transition: transform .25s ease;
+      display:flex; flex-direction:column; box-shadow:var(--shadow);
+    }
+    .sheet.show{ transform:translateX(0); }
+    .sheet-bar{
+      position:sticky; top:0; z-index:5; background:#fff;
+      display:flex; align-items:center; gap:var(--s-2); padding: var(--s-2) var(--s-3);
+      border-bottom:1px solid var(--border);
+    }
+    .sheet-title{font-weight:800; font-size:var(--fs-2)}
+    .pill{display:inline-flex; align-items:center; gap:8px; border:1px dashed var(--border); border-radius:999px; padding:6px 10px; color:var(--muted); font-weight:700}
+
+    .sheet-body{
+      padding: var(--s-3);
+      overflow:auto; -webkit-overflow-scrolling:touch;
+      display:flex; flex-direction:column; gap:var(--s-3);
+    }
+    .card{
+      background:var(--surface-2); border:1px solid var(--border);
+      border-radius:var(--radius); padding:var(--s-3);
+      box-shadow:var(--shadow);
+    }
+
+    /* Chips (claros) */
+    .chips{display:flex; flex-wrap:wrap; gap:8px}
+    .chip{
+      display:inline-flex; align-items:center; gap:8px; user-select:none;
+      background:#fff; color:#0f172a; border:1px solid var(--brand-100);
+      border-radius:999px; padding:10px 14px; font-weight:800; letter-spacing:.01em;
+      box-shadow: inset 0 -1px 0 rgba(15,23,42,.03);
+    }
+    .chip i{color:var(--brand-600)}
+    .chip.total{ background:var(--brand-50); border-color:#b6efce }
+    .chip.discount{ opacity:.98 }
+
+    /* Accordion (espaçado) */
+    details.ac{border:1px solid var(--border); border-radius:var(--radius); background:#fff}
+    details.ac summary{
+      list-style:none; cursor:pointer; padding: var(--s-3);
+      font-weight:800; display:flex; align-items:center; justify-content:space-between;
+    }
+    details.ac summary::-webkit-details-marker{display:none}
+    details.ac .ac-body{padding:0 var(--s-3) var(--s-3)}
+    .tbl{width:100%; border-collapse:separate; border-spacing:0}
+    .tbl th,.tbl td{padding:.6rem .4rem; border-bottom:1px solid var(--border)}
+    .tbl th{text-align:left; color:var(--muted); font-weight:700}
+    .txt-end{text-align:end}
+    .table-wrap{overflow:auto} /* evita overflow em telas muito estreitas */
+
+    /* ========= Bottom bar ========= */
+    .bottom{
+      position:fixed; left:0; right:0; bottom:0; z-index:70;
+      background:#fff; border-top:1px solid var(--border);
+      display:flex; gap:var(--s-2);
+      padding: var(--s-2) calc(var(--s-3) + env(safe-area-inset-right)) calc(var(--s-2) + env(safe-area-inset-bottom)) calc(var(--s-3) + env(safe-area-inset-left));
+      box-shadow:0 -6px 20px rgba(15,23,42,.06);
+    }
+    .bbtn{
+      flex:1; min-height:var(--tap);
+      border:1px solid var(--border); border-radius:var(--radius-sm); background:#fff;
+      display:flex; flex-direction:column; gap:4px; align-items:center; justify-content:center; font-weight:700;
+    }
+    .bbtn.primary{ background:var(--brand); border-color:var(--brand-600); color:#fff }
+
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+    /* ========= Desktop (split) ========= */
+    @media (min-width: 992px){
+      .sheet{position:static; transform:none; border:1px solid var(--border); border-radius:var(--radius)}
+      .sheet-bar{position:static; border-bottom:1px solid var(--border)}
+      .btn-back{display:none}
+      .list{padding-bottom:var(--s-4)}
+      .bottom{display:none}
+      .wrapper{padding: var(--s-4) 0;}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="wrapper">
+    <!-- App bar -->
+    <header class="appbar" role="banner">
+      <div class="brand"><span class="dot" aria-hidden="true"></span> HABItar</div>
+      <div id="hello" class="hey">Olá!</div>
+    </header>
+
+    <!-- Filtros -->
+    <nav class="filters" aria-label="Filtros de status">
+      <div class="seg" role="tablist" aria-label="Status">
+        <button class="all active" role="tab" aria-selected="true" data-status="">Tudo</button>
+        <button role="tab" data-status="Em andamento">Em andamento</button>
+        <button role="tab" data-status="Concluida">Concluída</button>
+        <button role="tab" data-status="Pausada">Pausada</button>
+      </div>
+    </nav>
+
+    <!-- Busca -->
+    <div class="search-wrap">
+      <label for="q" class="sr-only">Buscar obra</label>
+      <div class="input" role="search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input id="q" inputmode="search" placeholder="Buscar obra pelo nome ou status…"/>
+        <button id="clearQ" class="btn-ico" aria-label="Limpar busca"><i class="bi bi-x"></i></button>
+      </div>
+    </div>
+
+    <!-- Layout -->
+    <div class="layout">
+      <!-- Lista -->
+      <main class="list" id="list" role="list">
+        <div class="skel" aria-hidden="true"></div>
+        <div class="skel" aria-hidden="true"></div>
+        <div class="skel" aria-hidden="true"></div>
+      </main>
+
+      <!-- Detalhes -->
+      <section class="sheet" id="sheet" aria-live="polite">
+        <div class="sheet-bar">
+          <button class="btn-ico btn-back" id="btnBack" aria-label="Voltar"><i class="bi bi-chevron-left"></i></button>
+          <div class="sheet-title" id="sheetTitle">Detalhes</div>
+          <span class="ms-auto pill" id="statusPill"><i class="bi bi-flag"></i> —</span>
+        </div>
+
+        <div class="sheet-body" id="sheetBody">
+          <div class="card" id="cardTop" hidden>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--s-3)">
+              <div>
+                <div class="w-title" id="workTitle">Selecione uma obra</div>
+                <div class="muted">Cliente: <span id="clientName">—</span></div>
+              </div>
+              <span class="badge-st st-Em andamento" id="progressPct">0%</span>
+            </div>
+            <div class="progress"><div class="bar" id="bar" style="width:0%"></div></div>
+            <div class="muted work-meta">Responsável: <span id="responsible">—</span></div>
+          </div>
+
+          <!-- Orçamento -->
+          <div class="card" id="cardBudget" hidden>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--s-3); margin-bottom:4px">
+              <div class="w-title" style="font-size:var(--fs-1)">Orçamento</div>
+              <span id="budgetType" class="pill">—</span>
+            </div>
+
+            <div class="chips" style="margin-top:8px">
+              <span class="chip"><i class="bi bi-box-seam"></i> Materiais: <strong id="chipMat">R$ 0,00</strong></span>
+              <span class="chip"><i class="bi bi-people"></i> Mão de obra: <strong id="chipLabor">R$ 0,00</strong></span>
+              <span class="chip discount"><i class="bi bi-ticket-perforated"></i> Desconto: <strong id="chipDiscount">- R$ 0,00</strong></span>
+              <span class="chip total"><i class="bi bi-cash-coin"></i> Total: <strong id="chipTotal">R$ 0,00</strong></span>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:var(--s-2); margin-top:var(--s-2)">
+              <details class="ac" id="acMat" open>
+                <summary><span>Materiais</span> <i class="bi bi-chevron-down"></i></summary>
+                <div class="ac-body">
+                  <div class="table-wrap">
+                    <table class="tbl" aria-label="Materiais">
+                      <thead><tr><th>Material</th><th class="txt-end">Valor m²</th><th class="txt-end">m²</th><th class="txt-end">Subtotal</th></tr></thead>
+                      <tbody id="matBody"><tr><td colspan="4" class="muted txt-end">—</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+              </details>
+
+              <details class="ac" id="acLabor">
+                <summary><span>Mão de Obra</span> <i class="bi bi-chevron-down"></i></summary>
+                <div class="ac-body">
+                  <div class="table-wrap">
+                    <table class="tbl" aria-label="Mão de obra">
+                      <thead><tr><th>Serviço</th><th class="txt-end">Valor</th></tr></thead>
+                      <tbody id="laborBody"><tr><td colspan="2" class="muted txt-end">—</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- Checklist -->
+          <div class="card" id="cardChecklist" hidden>
+            <div class="w-title" style="font-size:var(--fs-1); margin-bottom:var(--s-2)">Checklist</div>
+            <div id="checklistBox" class="vstack" style="display:flex; flex-direction:column; gap:var(--s-2)">
+              <div class="muted">—</div>
+            </div>
+            <div class="muted" style="margin-top:var(--s-2)">A equipe atualiza as tarefas e o progresso automaticamente.</div>
+          </div>
+
+          <!-- Observações -->
+          <div class="card" id="cardNotes" hidden>
+            <div class="w-title" style="font-size:var(--fs-1); margin-bottom:var(--s-2)">Observações</div>
+            <div id="notes" class="muted">—</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bottom actions -->
+    <nav class="bottom" aria-label="Ações">
+      <button class="bbtn" id="btnRefresh" aria-label="Atualizar"><i class="bi bi-arrow-clockwise"></i><span>Atualizar</span></button>
+      <a class="bbtn primary" id="btnContact" href="mailto:" aria-label="Contato"><i class="bi bi-chat-dots"></i><span>Contato</span></a>
+      <button class="bbtn" id="btnTop" aria-label="Topo"><i class="bi bi-arrow-up"></i><span>Topo</span></button>
+    </nav>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  /* Helpers */
+  const $=(s,c)=>(c||document).querySelector(s);
+  const $$=(s,c)=>Array.from((c||document).querySelectorAll(s));
+  const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const dateBR=d=>{try{return new Date(d).toLocaleDateString('pt-BR')}catch(_){return '-'}};
+  const getParam=k=>new URLSearchParams(location.search).get(k);
+  const api=url=>fetch(url).then(r=>{if(!r.ok)return r.text().then(t=>{throw new Error('HTTP '+r.status+' '+t)});return r.json();});
+
+  /* >>> Helpers para Observações (escape + quebras de linha) <<< */
+  const esc = s => String(s ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+  const nl2br = s => esc(s).replace(/\r?\n/g,'<br>');
+
+  /* Elements */
+  const els={
+    hello:$('#hello'),
+    list:$('#list'),
+    sheet:$('#sheet'),
+    sheetTitle:$('#sheetTitle'),
+    statusPill:$('#statusPill'),
+    btnBack:$('#btnBack'),
+    btnTop:$('#btnTop'),
+    btnRefresh:$('#btnRefresh'),
+    btnContact:$('#btnContact'),
+    q:$('#q'), clearQ:$('#clearQ'),
+    filters:$$('.seg button'),
+
+    workTitle:$('#workTitle'), clientName:$('#clientName'),
+    progressPct:$('#progressPct'), bar:$('#bar'), responsible:$('#responsible'),
+
+    budgetType:$('#budgetType'),
+    chipMat:$('#chipMat'), chipLabor:$('#chipLabor'), chipDiscount:$('#chipDiscount'), chipTotal:$('#chipTotal'),
+    matBody:$('#matBody'), laborBody:$('#laborBody'),
+
+    checklistBox:$('#checklistBox'),
+    notes:$('#notes'),
+
+    cardTop:$('#cardTop'), cardBudget:$('#cardBudget'), cardChecklist:$('#cardChecklist'), cardNotes:$('#cardNotes'),
+    sheetBody:$('#sheetBody')
+  };
+
+  const API={ client:id=>'/api/clients/'+id, works:id=>'/api/works?client='+encodeURIComponent(id) };
+
+  const state={ client:null, works:[], filter:'', query:'', activeId:null };
+
+  function mockClient(){ return { name:'Cliente', email:'' }; }
+  function mockWorks(){ return []; }
+
+  /* UI */
+  function workItem(w){
+    const stClass='st-'+String(w.status||'').replace(' ','\\ ');
+    const prog=Number(w.progressPercent||0);
+    const card=document.createElement('button');
+    card.type='button'; card.className='work'; card.setAttribute('role','listitem'); card.dataset.id=w._id;
+    card.innerHTML=`
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px">
+        <div>
+          <div class="w-title">${w.title||w.clientSnapshot?.name||'Obra'}</div>
+          <div class="muted">${w.responsibleName||'Responsável não definido'}</div>
+        </div>
+        <span class="badge-st ${stClass}">${w.status||'—'}</span>
+      </div>
+      <div class="progress" aria-label="Progresso ${prog}%"><div class="bar" style="width:${prog}%"></div></div>
+      <div class="muted work-meta">${prog}% • Início: ${dateBR(w.createdAt||new Date())}</div>`;
+    card.addEventListener('click',()=>openDetails(w._id));
+    return card;
+  }
+
+  function renderList(){
+    const q=state.query.toLowerCase();
+    const data=state.works.filter(w=>{
+      const matchQ=!q||((w.title||'')+' '+(w.status||'')+' '+(w.responsibleName||'')).toLowerCase().includes(q);
+      const matchF=!state.filter||(w.status||'')===state.filter;
+      return matchQ && matchF;
+    });
+    els.list.innerHTML='';
+    if(!data.length){
+      els.list.innerHTML=`<div class="muted" style="text-align:center; padding:16px">Nenhuma obra encontrada.</div>`;
+      return;
+    }
+    data.forEach(w=>els.list.appendChild(workItem(w)));
+  }
+
+  function setFilter(status){
+    state.filter=status||'';
+    els.filters.forEach(b=>{
+      const on = (b.dataset.status||'')===state.filter || (!state.filter && b.classList.contains('all'));
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    renderList();
+  }
+
+  function openDetails(id){
+    state.activeId=id;
+    const w=state.works.find(x=>x._id===id); if(!w) return;
+
+    els.sheetTitle.textContent=w.title||'Detalhes';
+    els.statusPill.innerHTML=`<i class="bi bi-flag"></i> ${w.status||'—'}`;
+
+    els.workTitle.textContent=w.title||'Obra';
+    els.clientName.textContent=w.clientSnapshot?.name||'—';
+    const prog=Number(w.progressPercent||0);
+    els.bar.style.width=prog+'%';
+    els.progressPct.textContent=prog+'%';
+    els.responsible.textContent=w.responsibleName||'—';
+
+    const manual=w.budgetManual||null;
+    els.budgetType.textContent=w.budgetPreset?'Preset':(manual?'Manual':'—');
+
+    const mats=manual?.materials||[], labor=manual?.labor||[], discount=Number(manual?.discount||0);
+
+    let sumMat=0;
+    els.matBody.innerHTML=mats.length?'':'<tr><td colspan="4" class="muted txt-end">—</td></tr>';
+    mats.forEach(m=>{
+      const sub=Number(m.pricePerM2||0)*Number(m.areaM2||0); sumMat+=sub;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${m.name||'—'}</td><td class="txt-end">${money(m.pricePerM2||0)}</td><td class="txt-end">${(Number(m.areaM2||0)).toLocaleString('pt-BR')}</td><td class="txt-end">${money(sub)}</td>`;
+      els.matBody.appendChild(tr);
+    });
+
+    let sumLabor=0;
+    els.laborBody.innerHTML=labor.length?'':'<tr><td colspan="2" class="muted txt-end">—</td></tr>';
+    labor.forEach(l=>{
+      sumLabor+=Number(l.price||0);
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${l.name||'—'}</td><td class="txt-end">${money(l.price||0)}</td>`;
+      els.laborBody.appendChild(tr);
+    });
+
+    const total=Math.max(0,sumMat+sumLabor-discount);
+    els.chipMat.textContent=money(sumMat);
+    els.chipLabor.textContent=money(sumLabor);
+    els.chipDiscount.textContent='- '+money(discount);
+    els.chipTotal.textContent=money(total);
+
+    const cl=w.checklist||[];
+    els.checklistBox.innerHTML=cl.length?'':'<div class="muted">—</div>';
+    cl.forEach(item=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:12px; padding:8px 10px; background:#fff';
+      row.innerHTML=`
+        <div style="width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:#f8fafc;border:1px solid var(--border)">${item.done?'<i class="bi bi-check2"></i>':''}</div>
+        <div style="flex:1">${(item.title||'—')}</div>
+        <span class="badge-st" style="background:#eef2f7;color:var(--muted)">${item.done?'Concluído':'Pendente'}</span>`;
+      els.checklistBox.appendChild(row);
+    });
+
+    /* >>> Observações: aceita notes/observations/obs, escapa e mantém quebras de linha <<< */
+    const rawNotes = w.notes ?? w.observations ?? w.obs ?? '';
+    els.notes.innerHTML = rawNotes ? nl2br(rawNotes) : '—';
+    els.cardNotes.hidden = !rawNotes;
+
+    [els.cardTop,els.cardBudget,els.cardChecklist].forEach(c=>c.hidden=false);
+    els.sheet.classList.add('show');
+  }
+
+  function closeDetails(){ els.sheet.classList.remove('show'); }
+
+  /* Eventos */
+  function attachEvents(){
+    els.filters.forEach(b=> b.addEventListener('click', ()=> setFilter(b.dataset.status||'')));
+    els.q.addEventListener('input', ()=>{ state.query=els.q.value.trim(); renderList(); });
+    els.clearQ.addEventListener('click', ()=>{ els.q.value=''; state.query=''; renderList(); els.q.focus(); });
+    els.btnTop.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+    els.btnRefresh.addEventListener('click', ()=> loadData(true));
+    els.btnBack.addEventListener('click', closeDetails);
+  }
+
+  function setContact(email){ els.btnContact.href = email ? ('mailto:'+email) : 'mailto:'; }
+
+  /* Data */
+  function loadData(force){
+    const clientId=getParam('client');
+    if(!clientId){
+      els.hello.textContent='Olá!';
+      els.list.innerHTML=`<div class="muted" style="text-align:center; padding:16px">Link inválido. Falta o parâmetro <code>?client=</code>.</div>`;
+      return;
+    }
+
+    if(force){
+      els.list.innerHTML=`<div class="skel" aria-hidden="true"></div><div class="skel" aria-hidden="true"></div>`;
+    }
+
+    api(API.client(clientId)).catch(()=>({name:'Cliente', email:''})).then(c=>{
+      state.client=c; els.hello.innerHTML=`Olá, <strong>${(c.name||'Cliente')}</strong>!`; setContact(c.email||'');
+    });
+
+    api(API.works(clientId)).catch(()=>[]).then(r=>{
+      state.works=r?.data||r||[];
+      if(!state.works.length){
+        els.list.innerHTML=`<div class="muted" style="text-align:center; padding:16px">Ainda não há obras para este cliente.</div>`;
+        return;
+      }
+      renderList();
+      if(window.matchMedia('(min-width: 992px)').matches && !state.activeId){
+        openDetails(state.works[0]._id);
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{ attachEvents(); loadData(false); });
+})();
+</script>
+</body>
+</html>

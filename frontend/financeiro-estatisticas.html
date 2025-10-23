@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>HABItar • Estatísticas</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --brand-green:#22c55e;--brand-green-600:#16a34a;--brand-green-700:#15803d;
+      --brand-green-100:#e9f9ef;--brand-green-50:#f3fcf6;
+      --soft-gray:#f6f7f9;--surface:#fff;--border:#e9ecf1;--muted:#98a2b3;--text:#0f172a;
+      --grad-accent:linear-gradient(135deg, rgba(34,197,94,.12), rgba(34,197,94,.04))
+    }
+    body{font-family:'Inter',system-ui;background:radial-gradient(900px 500px at 120% 10%,var(--brand-green-50),transparent),var(--soft-gray);color:var(--text)}
+
+    /* Sidebar */
+    .sidebar{position:fixed;inset:0 auto 0 0;width:280px;background:var(--surface);border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:10px;z-index:1030}
+    .sidebar.mini{width:88px;align-items:center}
+    .brand{font-weight:900;display:flex;align-items:center;gap:10px;font-size:1.25rem}
+    .brand .dot{width:10px;height:10px;border-radius:999px;background:var(--brand-green);box-shadow:0 0 0 6px var(--brand-green-100)}
+    .brand-text{display:inline}
+    .nav-subtitle{text-transform:uppercase;font-size:.72rem;color:var(--muted);margin:8px 0 4px;letter-spacing:.08em}
+    .nav-link-custom{border-radius:12px;padding:10px 12px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:12px;text-decoration:none;transition:transform .18s cubic-bezier(.2,.8,.2,1),background-color .25s ease,box-shadow .25s ease}
+    .nav-link-custom:hover{background:var(--brand-green-100);transform:translateX(2px);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .nav-link-custom.active{background:var(--grad-accent);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .divider{height:1px;background:var(--border);margin:10px 0}
+    .sidebar.mini .label, .sidebar.mini .nav-subtitle, .sidebar.mini .divider, .sidebar.mini #collapseNav .label{display:none!important}
+    .sidebar.mini .brand-text{display:none!important}
+    .sidebar.mini .nav-link-custom{justify-content:center;padding:10px}
+
+    .content{margin-left:280px;padding:28px}
+    .sidebar.mini ~ .content{margin-left:88px}
+
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px}
+    .kpi-icon{width:40px;height:40px;border-radius:12px;background:var(--brand-green-100);display:grid;place-items:center;margin-bottom:8px}
+    .kpi-value{font-size:1.7rem;font-weight:900;letter-spacing:-.02em}
+    .kpi-label{color:var(--muted);font-size:.9rem;font-weight:600}
+
+    .toolbar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;position:sticky;top:12px;z-index:10}
+
+    /* Tamanho único p/ todos os gráficos */
+    .chart-card{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      height: 380px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .chart-title{font-weight:800;letter-spacing:-.01em}
+    .chart-card .canvas-wrap{position: relative; flex: 1 1 auto; min-height: 0;}
+    .chart-card canvas{width: 100% !important; height: 100% !important; display: block;}
+
+    /* Tablet */
+    @media (min-width:820px) and (max-width:1280px){
+      .sidebar{ width:260px; padding:18px 14px; }
+      .content{ margin-left:260px; padding:22px; }
+      .chart-card{height:350px}
+    }
+    @media (max-width:992px){
+      .sidebar{position:sticky;top:0;width:100%;border-right:none;border-bottom:1px solid var(--border)}
+      .content{margin-left:0;padding:18px}
+      .chart-card{height:340px}
+    }
+    @media (max-width:576px){
+      .chart-card{height:300px}
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> <span class="brand-text">HABItar</span></div>
+    <div class="divider"></div>
+
+    <div class="nav-subtitle">Geral</div>
+    <a class="nav-link-custom" href="./dashboard.html" title="Dashboard"><i class="bi bi-speedometer"></i> <span class="label">Dashboard</span></a>
+    <a class="nav-link-custom" href="./index.html" title="Equipe"><i class="bi bi-people"></i> <span class="label">Equipe</span></a>
+
+    <div class="nav-subtitle mt-2">Clientes</div>
+    <a class="nav-link-custom" href="./clientes-gerenciar.html" title="Clientes – Gerenciar"><i class="bi bi-person-lines-fill"></i> <span class="label">Gerenciar</span></a>
+
+    <div class="nav-subtitle mt-2">Obras</div>
+    <a class="nav-link-custom" href="./obras-gerenciar.html" title="Obras – Gerenciar"><i class="bi bi-hammer"></i> <span class="label">Gerenciar</span></a>
+    <a class="nav-link-custom" href="./gerar-orcamento.html" title="Gerar Orçamento"><i class="bi bi-receipt"></i> <span class="label">Gerar Orçamento</span></a>
+
+    <div class="nav-subtitle mt-2">Financeiro</div>
+    <a class="nav-link-custom" href="./financeiro-faturamento.html" title="Faturamento"><i class="bi bi-cash-coin"></i> <span class="label">Faturamento</span></a>
+    <a class="nav-link-custom active" href="./financeiro-estatisticas.html" title="Estatísticas"><i class="bi bi-graph-up-arrow"></i> <span class="label">Estatísticas</span></a>
+
+    <div class="divider"></div>
+    <a class="nav-link-custom" href="#" id="collapseNav"><i class="bi bi-chevron-left"></i> <span class="label">Recolher navbar</span></a>
+  </aside>
+
+  <!-- Conteúdo -->
+  <main class="content">
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h1 class="h3 mb-1">Estatísticas Financeiras</h1>
+        <div class="text-muted">Acompanhe tendências por período, categorias, status, método e clientes.</div>
+      </div>
+    </header>
+
+    <!-- KPIs (mês atual) -->
+    <section class="row g-3 mb-3">
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-arrow-down-square"></i></div><div class="kpi-value" id="kpiMesEntradas">R$ 0</div><div class="kpi-label">Entradas (mês)</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-arrow-up-square"></i></div><div class="kpi-value" id="kpiMesSaidas">R$ 0</div><div class="kpi-label">Saídas (mês)</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-cash-coin"></i></div><div class="kpi-value" id="kpiMesSaldo">R$ 0</div><div class="kpi-label">Saldo (mês)</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-bell"></i></div><div class="kpi-value" id="kpiMesPend">R$ 0</div><div class="kpi-label">Pendências (mês)</div></div></div>
+    </section>
+
+    <!-- Toolbar -->
+    <section class="toolbar mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label">Buscar</label>
+          <input id="searchInput" type="text" class="form-control" placeholder="Descrição, categoria ou forma de pagamento"/>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Tipo</label>
+          <select id="kindFilter" class="form-select">
+            <option value="">Todos</option>
+            <option value="Entrada">Entrada</option>
+            <option value="Saída">Saída</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Status</label>
+          <select id="statusFilter" class="form-select">
+            <option value="">Todos</option>
+            <option value="Pago">Pago</option>
+            <option value="A receber">A receber</option>
+            <option value="Atrasado">Atrasado</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">De</label>
+          <input type="date" id="dateFrom" class="form-control"/>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Até</label>
+          <input type="date" id="dateTo" class="form-control"/>
+        </div>
+        <div class="col-12 col-md-1">
+          <button class="btn btn-outline-secondary w-100" id="clearFilters"><i class="bi bi-x-circle"></i> Limpar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="row g-3">
+      <div class="col-12 col-xl-7">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Evolução por mês (Entradas x Saídas)</div>
+            <div class="chart-actions">
+              <button class="btn btn-sm btn-outline-secondary" data-dlexport="lineES"><i class="bi bi-download"></i> PNG</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="chartLineES"></canvas></div>
+        </div>
+      </div>
+      <div class="col-12 col-xl-5">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Fluxo acumulado</div>
+            <div class="chart-actions">
+              <button class="btn btn-sm btn-outline-secondary" data-dlexport="areaFluxo"><i class="bi bi-download"></i> PNG</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="chartAreaFluxo"></canvas></div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Categorias (Entradas x Saídas)</div>
+            <div class="chart-actions">
+              <button class="btn btn-sm btn-outline-secondary" data-dlexport="barCategorias"><i class="bi bi-download"></i> PNG</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="chartBarCategorias"></canvas></div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Status (Pago / A receber / Atrasado)</div>
+            <div class="chart-actions">
+              <button class="btn btn-sm btn-outline-secondary" data-dlexport="doughStatus"><i class="bi bi-download"></i> PNG</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="chartDoughStatus"></canvas></div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Formas de Pagamento</div>
+            <div class="chart-actions">
+              <button class="btn btn-sm btn-outline-secondary" data-dlexport="pieMetodo"><i class="bi bi-download"></i> PNG</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="chartPieMetodo"></canvas></div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Top Clientes (receita)</div>
+            <div class="chart-actions">
+              <button class="btn btn-sm btn-outline-secondary" data-dlexport="barClientes"><i class="bi bi-download"></i> PNG</button>
+            </div>
+          </div>
+          <div class="canvas-wrap"><canvas id="chartBarClientes"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  (function(){
+    'use strict';
+
+    // ===== Helpers =====
+    function $(sel, ctx){ return (ctx||document).querySelector(sel); }
+    function $$(sel, ctx){ return Array.prototype.slice.call((ctx||document).querySelectorAll(sel)); }
+    function fmtMoney(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+    function ymd(d){ const dt=new Date(d); const m=String(dt.getMonth()+1).padStart(2,'0'); const day=String(dt.getDate()).padStart(2,'0'); return dt.getFullYear()+'-'+m+'-'+day; }
+    function apiJson(url, opts){
+      return fetch(url, opts||{}).then(function(r){
+        if(!r.ok){ return r.text().then(function(t){ throw new Error('HTTP '+r.status+' – '+(t||r.statusText)); }); }
+        return r.json();
+      });
+    }
+
+    var API_TX = '/api/finance/transactions';
+    var API_CLIENTS = '/api/clients';
+
+    // ===== Elements =====
+    var els = {
+      // kpis
+      kpiMesEntradas: $('#kpiMesEntradas'),
+      kpiMesSaidas: $('#kpiMesSaidas'),
+      kpiMesSaldo: $('#kpiMesSaldo'),
+      kpiMesPend: $('#kpiMesPend'),
+
+      // filtros
+      search: $('#searchInput'),
+      kindFilter: $('#kindFilter'),
+      statusFilter: $('#statusFilter'),
+      dateFrom: $('#dateFrom'),
+      dateTo: $('#dateTo'),
+      clearFilters: $('#clearFilters'),
+
+      // charts
+      cLineES: $('#chartLineES'),
+      cAreaFluxo: $('#chartAreaFluxo'),
+      cBarCategorias: $('#chartBarCategorias'),
+      cDoughStatus: $('#chartDoughStatus'),
+      cPieMetodo: $('#chartPieMetodo'),
+      cBarClientes: $('#chartBarClientes'),
+
+      // sidebar
+      collapseNav: $('#collapseNav')
+    };
+
+    // ===== Chart instances =====
+    var charts = { lineES:null, areaFluxo:null, barCategorias:null, doughStatus:null, pieMetodo:null, barClientes:null };
+
+    // ===== Data loaders =====
+    function fetchTransactions(){
+      var p = new URLSearchParams();
+      var q = els.search?.value?.trim() || '';
+      var t = els.kindFilter?.value || '';       // type
+      var s = els.statusFilter?.value || '';     // status
+      var df = els.dateFrom?.value || '';
+      var dt = els.dateTo?.value || '';
+      if(q)  p.set('q', q);
+      if(t)  p.set('type', t);        // compatível com faturamento
+      if(s)  p.set('status', s);
+      if(df) p.set('from', df);
+      if(dt) p.set('to', dt);
+      return apiJson(API_TX + '?' + p.toString()).catch(function(){ return []; });
+    }
+    function fetchClients(){
+      return apiJson(API_CLIENTS).then(function(r){ return r?.data || r || []; }).catch(function(){ return []; });
+    }
+
+    // ===== Transform helpers =====
+    function monthKey(d){ var dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); }
+    function sortMonthKeys(keys){ return keys.sort(function(a,b){ return new Date(a+'-01') - new Date(b+'-01'); }); }
+
+    function calcKPIsMonth(list){
+      var now = new Date(); var m = now.getMonth(); var y = now.getFullYear();
+      var inMonth = list.filter(function(t){ var d=new Date(t.date); return d.getMonth()===m && d.getFullYear()===y; });
+
+      var entr = inMonth.filter(function(t){return t.type==='Entrada';}).reduce(function(a,t){return a+Number(t.amount||0);},0);
+      var said = inMonth.filter(function(t){return t.type==='Saída';}).reduce(function(a,t){return a+Number(t.amount||0);},0);
+      var saldo = entr - said;
+      var pend = inMonth
+        .filter(function(t){return t.status==='A receber' || t.status==='Atrasado';})
+        .reduce(function(a,t){return a + Number(t.amount||0);},0);
+
+      els.kpiMesEntradas.textContent = fmtMoney(entr);
+      els.kpiMesSaidas.textContent   = fmtMoney(said);
+      els.kpiMesSaldo.textContent    = fmtMoney(saldo);
+      els.kpiMesPend.textContent     = fmtMoney(pend);
+    }
+
+    function buildLineAndArea(list){
+      var mapEntr={}, mapSai={};
+      list.forEach(function(t){
+        var k = monthKey(t.date);
+        if(t.type==='Entrada'){ mapEntr[k]=(mapEntr[k]||0)+Number(t.amount||0); }
+        if(t.type==='Saída'){   mapSai[k]=(mapSai[k]||0)+Number(t.amount||0); }
+      });
+      var keys = Array.from(new Set(Object.keys(mapEntr).concat(Object.keys(mapSai))));
+      keys = sortMonthKeys(keys);
+
+      var dataEntr = keys.map(function(k){ return mapEntr[k]||0; });
+      var dataSai  = keys.map(function(k){ return mapSai[k]||0; });
+
+      // Fluxo acumulado
+      var cumul = []; var acc=0;
+      keys.forEach(function(k,i){
+        acc += (dataEntr[i] - dataSai[i]);
+        cumul.push(acc);
+      });
+
+      return { labels: keys, entradas: dataEntr, saidas: dataSai, cumul: cumul };
+    }
+
+    function buildCategorias(list){
+      var cats = {};
+      list.forEach(function(t){
+        var c = (t.category && String(t.category).trim()) ? String(t.category).trim() : '—';
+        if(!cats[c]) cats[c] = { Entrada:0, Saída:0 };
+        cats[c][t.type] = (cats[c][t.type]||0) + Number(t.amount||0);
+      });
+      var labels = Object.keys(cats).sort();
+      var entrada = labels.map(function(l){ return cats[l]['Entrada']||0; });
+      var saida   = labels.map(function(l){ return cats[l]['Saída']||0; });
+      return { labels: labels, entrada: entrada, saida: saida };
+    }
+
+    function buildStatus(list){
+      var pago = 0, aReceber = 0, atrasado = 0;
+      list.forEach(function(t){
+        var v = Number(t.amount||0);
+        if(t.status==='Pago') pago += v;
+        else if(t.status==='A receber') aReceber += v;
+        else if(t.status==='Atrasado') atrasado += v;
+      });
+      return { labels:['Pago','A receber','Atrasado'], data:[pago, aReceber, atrasado] };
+    }
+
+    function buildMetodo(list){
+      var map={};
+      list.forEach(function(t){
+        var m = (t.method && String(t.method).trim()) ? String(t.method).trim() : '—';
+        map[m] = (map[m]||0)+Number(t.amount||0);
+      });
+      var labels = Object.keys(map).sort();
+      var data = labels.map(function(l){ return map[l]; });
+      return { labels:labels, data:data };
+    }
+
+    function buildTopClientes(list, clients){
+      // Somar apenas ENTRADAS por cliente
+      var map = {};
+      list.forEach(function(t){
+        if(t.type!=='Entrada') return;
+        // aceita várias formas de guardar id do cliente
+        var id = null;
+        if(t.client && typeof t.client==='object' && t.client._id) id = t.client._id;
+        else if(t.clientId) id = t.clientId;
+        else if(t.relatedClient) id = t.relatedClient;
+        if(!id) return;
+        map[id] = (map[id]||0) + Number(t.amount||0);
+      });
+      var arr = Object.keys(map).map(function(id){ return { id:id, total: map[id] }; });
+      arr.sort(function(a,b){ return b.total - a.total; });
+      arr = arr.slice(0,8);
+
+      // nomes
+      var nameById = {};
+      (clients||[]).forEach(function(c){ if(c && c._id){ nameById[c._id] = c.name || c._id; } });
+      var labels = arr.map(function(x){ return nameById[x.id] || (x.id || '—'); });
+      var data = arr.map(function(x){ return x.total; });
+      return { labels: labels, data: data };
+    }
+
+    // ===== Chart utils =====
+    function dlCanvasPNG(idCanvas, suggestedName){
+      var c = document.getElementById(idCanvas);
+      if(!c) return;
+      var a = document.createElement('a');
+      a.href = c.toDataURL('image/png');
+      a.download = (suggestedName||idCanvas)+'.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function buildCharts(data){
+      // destroy previous
+      Object.keys(charts).forEach(function(k){ if(charts[k]){ charts[k].destroy(); charts[k]=null; } });
+
+      // Colors
+      var green = 'rgba(34,197,94,0.9)';
+      var greenSoft = 'rgba(34,197,94,0.15)';
+      var red = 'rgba(239, 68, 68, 0.9)';
+      var redSoft = 'rgba(239, 68, 68, 0.15)';
+      var blue = 'rgba(59,130,246,0.9)';
+      var amber = 'rgba(245,158,11,0.9)';
+      var gray = 'rgba(148,163,184,0.9)';
+
+      // 1) Linha Entradas x Saídas
+      var es = buildLineAndArea(data.list);
+      charts.lineES = new Chart(els.cLineES, {
+        type: 'line',
+        data: {
+          labels: es.labels,
+          datasets: [
+            { label: 'Entradas', data: es.entradas, borderColor: green, backgroundColor: greenSoft, tension:.25, fill: false, pointRadius: 2 },
+            { label: 'Saídas', data: es.saidas,   borderColor: red,   backgroundColor: redSoft,   tension:.25, fill: false, pointRadius: 2 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode:'index', intersect:false },
+          plugins: { legend:{ position:'bottom' }, tooltip:{ callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+ Number(ctx.raw||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) } } } },
+          scales: { y: { ticks:{ callback: function(v){ return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); } } } }
+        }
+      });
+
+      // 2) Área Fluxo acumulado
+      charts.areaFluxo = new Chart(els.cAreaFluxo, {
+        type: 'line',
+        data: { labels: es.labels, datasets: [ { label:'Acumulado', data: es.cumul, borderColor: blue, backgroundColor:'rgba(59,130,246,0.12)', tension:.25, fill:true, pointRadius:2 } ] },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend:{ position:'bottom' }, tooltip:{ callbacks:{ label:function(ctx){ return 'Acumulado: '+ Number(ctx.raw||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) } } } },
+          scales: { y: { ticks:{ callback: function(v){ return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); } } } }
+        }
+      });
+
+      // 3) Categorias (barras empilhadas)
+      var cat = buildCategorias(data.list);
+      charts.barCategorias = new Chart(els.cBarCategorias, {
+        type: 'bar',
+        data: {
+          labels: cat.labels,
+          datasets: [
+            { label: 'Entradas', data: cat.entrada, backgroundColor: green },
+            { label: 'Saídas',   data: cat.saida,   backgroundColor: red }
+          ]
+        },
+        options: {
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom' }, tooltip:{ callbacks:{ label:function(ctx){ return ctx.dataset.label+': '+Number(ctx.raw||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) } } } },
+          scales:{ x:{ stacked:true }, y:{ stacked:true, ticks:{ callback: function(v){ return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); } } } }
+        }
+      });
+
+      // 4) Status (rosca 3 fatias)
+      var st = buildStatus(data.list);
+      charts.doughStatus = new Chart(els.cDoughStatus, {
+        type: 'doughnut',
+        data: { labels: st.labels, datasets: [ { data: st.data, backgroundColor: [green, amber, red] } ] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' }, tooltip:{ callbacks:{ label:function(ctx){ var v=ctx.raw||0; return ctx.label+': '+Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); } } } } }
+      });
+
+      // 5) Métodos (pizza)
+      var met = buildMetodo(data.list);
+      var palette=[green,blue,red,amber,gray,'rgba(99,102,241,0.9)','rgba(16,185,129,0.9)','rgba(244,63,94,0.9)'];
+      var metColors = met.labels.map(function(_,i){ return palette[i % palette.length]; });
+      charts.pieMetodo = new Chart(els.cPieMetodo, {
+        type: 'pie',
+        data: { labels: met.labels, datasets: [ { data: met.data, backgroundColor: metColors } ] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' }, tooltip:{ callbacks:{ label:function(ctx){ return ctx.label+': '+Number(ctx.raw||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) } } } } }
+      });
+
+      // 6) Top Clientes (barras horizontais)
+      var tc = buildTopClientes(data.list, data.clients);
+      charts.barClientes = new Chart(els.cBarClientes, {
+        type: 'bar',
+        data: { labels: tc.labels, datasets: [ { label:'Receita', data: tc.data, backgroundColor: green } ] },
+        options: {
+          indexAxis: 'y',
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:function(ctx){ return 'Receita: '+Number(ctx.raw||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) } } } },
+          scales:{ x:{ ticks:{ callback: function(v){ return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); } } } }
+        }
+      });
+
+      // download PNG
+      $$('[data-dlexport]').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var key = btn.getAttribute('data-dlexport');
+          var map = {
+            lineES: 'chartLineES',
+            areaFluxo: 'chartAreaFluxo',
+            barCategorias: 'chartBarCategorias',
+            doughStatus: 'chartDoughStatus',
+            pieMetodo: 'chartPieMetodo',
+            barClientes: 'chartBarClientes'
+          };
+          var canvasId = map[key];
+          if(canvasId) dlCanvasPNG(canvasId, key+'-'+new Date().toISOString().slice(0,10));
+        });
+      });
+    }
+
+    function refresh(){
+      Promise.all([fetchTransactions(), fetchClients()]).then(function(res){
+        var txList = (res[0]?.data) ? res[0].data : (Array.isArray(res[0]) ? res[0] : []);
+        var clients = res[1] || [];
+        calcKPIsMonth(txList);
+        buildCharts({ list: txList, clients: clients });
+      }).catch(function(err){
+        console.error(err);
+        alert('Erro ao carregar estatísticas: '+err.message);
+      });
+    }
+
+    // ===== Events =====
+    document.addEventListener('DOMContentLoaded', function(){
+      // filtros
+      if(els.search) els.search.addEventListener('input', function(){ clearTimeout(window.__tStats); window.__tStats=setTimeout(refresh,250); });
+      if(els.kindFilter) els.kindFilter.addEventListener('change', refresh);
+      if(els.statusFilter) els.statusFilter.addEventListener('change', refresh);
+      if(els.dateFrom) els.dateFrom.addEventListener('change', refresh);
+      if(els.dateTo) els.dateTo.addEventListener('change', refresh);
+      if(els.clearFilters) els.clearFilters.addEventListener('click', function(){
+        if(els.search) els.search.value='';
+        if(els.kindFilter) els.kindFilter.value='';
+        if(els.statusFilter) els.statusFilter.value='';
+        if(els.dateFrom) els.dateFrom.value='';
+        if(els.dateTo) els.dateTo.value='';
+        refresh();
+      });
+
+      // sidebar mini
+      if(els.collapseNav){
+        var tooltipList = [];
+        function enableMiniTooltips(){
+          tooltipList.forEach(function(t){ try{ t.dispose(); }catch(_e){} }); tooltipList=[];
+          var links = $$('.sidebar .nav-link-custom[title]');
+          links.forEach(function(el){ try{ tooltipList.push(new bootstrap.Tooltip(el,{placement:'right'})); }catch(_e){} });
+        }
+        function disableMiniTooltips(){ tooltipList.forEach(function(t){ try{ t.dispose(); }catch(_e){} }); tooltipList=[]; }
+        els.collapseNav.addEventListener('click', function(ev){
+          ev.preventDefault();
+          var sb = $('.sidebar'); if(!sb) return;
+          var willMini = !sb.classList.contains('mini');
+          sb.classList.toggle('mini');
+          if(willMini) enableMiniTooltips(); else disableMiniTooltips();
+        });
+      }
+
+      // primeira carga
+      refresh();
+    });
+  })();
+  </script>
+</body>
+</html>

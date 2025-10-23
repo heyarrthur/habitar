@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>HABItar • Gerenciar Obras</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --brand-green:#22c55e;--brand-green-600:#16a34a;--brand-green-100:#e9f9ef;--brand-green-50:#f3fcf6;
+      --soft-gray:#f6f7f9;--surface:#fff;--border:#e9ecf1;--muted:#98a2b3;--text:#0f172a;
+      --grad-accent:linear-gradient(135deg, rgba(34,197,94,.12), rgba(34,197,94,.04));
+      --tap:46px; /* altura mínima para toque confortável */
+    }
+    body{font-family:'Inter',system-ui;background:radial-gradient(900px 500px at 120% 10%,var(--brand-green-50),transparent),var(--soft-gray);color:var(--text)}
+
+    /* Sidebar (desktop) */
+    .sidebar{position:fixed;inset:0 auto 0 0;width:280px;background:var(--surface);border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:10px;z-index:1030}
+    .sidebar.mini{width:88px;align-items:center}
+    .brand{font-weight:900;display:flex;align-items:center;gap:10px;font-size:1.25rem}
+    .brand .dot{width:10px;height:10px;border-radius:999px;background:var(--brand-green);box-shadow:0 0 0 6px var(--brand-green-100)}
+    .brand-text{display:inline}
+    .nav-subtitle{text-transform:uppercase;font-size:.72rem;color:var(--muted);margin:8px 0 4px;letter-spacing:.08em}
+    .nav-link-custom{border-radius:12px;padding:10px 12px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:12px;text-decoration:none;transition:transform .18s,background-color .25s,box-shadow .25s}
+    .nav-link-custom:hover{background:var(--brand-green-100);transform:translateX(2px);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .nav-link-custom.active{background:var(--grad-accent);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .divider{height:1px;background:var(--border);margin:10px 0}
+    .sidebar.mini .label, .sidebar.mini .nav-subtitle, .sidebar.mini .divider, .sidebar.mini #collapseNav .label{display:none!important}
+    .sidebar.mini .brand-text{display:none!important}
+    .sidebar.mini .nav-link-custom{justify-content:center;padding:10px}
+
+    /* Content */
+    .content{margin-left:280px;padding:28px}
+    .sidebar.mini ~ .content{margin-left:88px}
+
+    /* UI */
+    .btn-brand{background:var(--brand-green);color:#fff;border:none;border-radius:12px;padding:.625rem 1rem}
+    .btn-brand:hover{background:var(--brand-green-600)}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px}
+    .kpi-icon{width:40px;height:40px;border-radius:12px;background:var(--brand-green-100);display:grid;place-items:center;margin-bottom:8px}
+    .kpi-value{font-size:1.7rem;font-weight:900;letter-spacing:-.02em}
+    .kpi-label{color:var(--muted);font-size:.9rem;font-weight:600}
+    .toolbar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;position:sticky;top:12px;z-index:10}
+
+    .status-pill{padding:6px 10px;border-radius:999px;font-size:.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+    .status-Em\ andamento{background:#e0f2fe;color:#075985}
+    .status-Concluida{background:#dcfce7;color:#15803d}
+    .status-Pausada{background:#fff7ed;color:#b45309}
+
+    .subtle-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px}
+    .chip{display:inline-flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--border);border-radius:999px;padding:4px 10px;font-size:.85rem}
+
+    /* checklist */
+    .check-row{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff;min-height:var(--tap)}
+    .check-row.done{opacity:.75}
+    .check-title{flex:1 1 auto}
+    .progress-wrap{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:10px}
+    .progress{height:10px;border-radius:999px}
+    .progress-bar{background:var(--brand-green)}
+
+    /* orçamento manual */
+    .table-mini th,.table-mini td{vertical-align:middle}
+    .badge-soft{background:#f1f5f9;border:1px solid var(--border)}
+
+    /* Tamanhos de toque */
+    .btn,.form-control,.form-select,.input-group-text{min-height:var(--tap)}
+
+    /* ------- Galaxy Tab S10 FE (820–1280px) ------- */
+    @media (min-width:820px) and (max-width:1280px){
+      .sidebar{ width:260px; padding:18px 14px; }
+      .sidebar.mini{ width:88px; }
+      .content{ margin-left:260px; padding:22px; }
+      .sidebar.mini ~ .content{ margin-left:88px; }
+      .nav-link-custom{ padding:12px 12px; }
+
+      .kpi-card{ padding:16px; }
+      .toolbar{ padding:12px; }
+
+      /* Modal confortável em tablet */
+      .modal-dialog{ max-width: 980px; }
+      .table-mini input.form-control{ min-width: 120px; }
+    }
+
+    /* ------- Mobile & telas menores ------- */
+    @media (max-width:992px){
+      .sidebar{position:sticky;top:0;width:100%;border-right:none;border-bottom:1px solid var(--border);padding:10px 12px;gap:8px}
+      .content{margin-left:0;padding:18px}
+      header .btn{ width: 100%; }
+      .toolbar{ top:0; border-radius:12px; }
+
+      /* Modal ocupa mais a tela */
+      .modal-dialog{ margin: 0.75rem; }
+    }
+
+    /* XS muito estreito: melhora tabela e oculta "Início" para caber */
+    @media (max-width:576px){
+      .table thead th:nth-child(2),
+      .table tbody td:nth-child(2){ display:none; } /* oculta coluna Início */
+      .kpi-card{ padding:14px; }
+      .kpi-value{ font-size:1.4rem; }
+      .progress{ height:8px; }
+
+      /* Força rolagem horizontal suave quando necessário */
+      .table-responsive{ -webkit-overflow-scrolling: touch; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> <span class="brand-text">HABItar</span></div>
+    <div class="divider"></div>
+
+    <div class="nav-subtitle">Geral</div>
+    <a class="nav-link-custom" href="./dashboard.html"><i class="bi bi-speedometer"></i> <span class="label">Dashboard</span></a>
+    <a class="nav-link-custom" href="./index.html"><i class="bi bi-people"></i> <span class="label">Equipe</span></a>
+
+    <div class="nav-subtitle mt-2">Clientes</div>
+    <a class="nav-link-custom" href="./clientes-gerenciar.html"><i class="bi bi-person-lines-fill"></i> <span class="label">Gerenciar</span></a>
+
+    <div class="nav-subtitle mt-2">Obras</div>
+    <a class="nav-link-custom active" href="./obras-gerenciar.html"><i class="bi bi-hammer"></i> <span class="label">Gerenciar</span></a>
+    <a class="nav-link-custom" href="./gerar-orcamento.html"><i class="bi bi-receipt"></i> <span class="label">Gerar Orçamento</span></a>
+
+    <div class="nav-subtitle mt-2">Financeiro</div>
+    <a class="nav-link-custom" href="./financeiro-faturamento.html"><i class="bi bi-cash-coin"></i> <span class="label">Faturamento</span></a>
+    <a class="nav-link-custom" href="./financeiro-estatisticas.html"><i class="bi bi-graph-up-arrow"></i> <span class="label">Estatísticas</span></a>
+
+    <div class="divider"></div>
+    <a class="nav-link-custom" href="#" id="collapseNav"><i class="bi bi-chevron-left"></i> <span class="label">Recolher navbar</span></a>
+  </aside>
+
+  <!-- Conteúdo -->
+  <main class="content">
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h1 class="h3 mb-1">Obras</h1>
+        <div class="text-muted">Gerencie as obras, orçamento e checklist de execução.</div>
+      </div>
+      <button class="btn btn-brand" id="btnNovaObra"><i class="bi bi-plus-circle"></i> Nova obra</button>
+    </header>
+
+    <!-- KPIs -->
+    <section class="row g-3 mb-3">
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-clipboard-check"></i></div><div class="kpi-value" id="kpiObras">0</div><div class="kpi-label">Obras ativas</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-check2-square"></i></div><div class="kpi-value" id="kpiMedia">0%</div><div class="kpi-label">Progresso médio</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-flag"></i></div><div class="kpi-value" id="kpiConcluidas">0</div><div class="kpi-label">Concluídas</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div><div class="kpi-value" id="kpiPausadas">0</div><div class="kpi-label">Pausadas</div></div></div>
+    </section>
+
+    <!-- Toolbar -->
+    <section class="toolbar mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-8">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="searchInput" type="text" class="form-control" placeholder="Buscar por cliente, status..."/>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <select id="statusFilter" class="form-select">
+            <option value="">Todos os status</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Concluida">Concluída</option>
+            <option value="Pausada">Pausada</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-1">
+          <button class="btn btn-outline-secondary w-100" id="clearFilters"><i class="bi bi-x-circle"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lista -->
+    <section class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Cliente</th>
+                <th>Início</th>
+                <th>Status</th>
+                <th>Progresso</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="worksTbody">
+              <tr><td colspan="5" class="text-center py-4 text-muted">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal: Criar/Editar Obra -->
+    <div class="modal fade" id="workModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="workModalLabel">Nova obra</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <form id="workForm" class="needs-validation" novalidate>
+            <div class="modal-body">
+              <input type="hidden" id="workId" />
+
+              <!-- Progresso -->
+              <div class="progress-wrap mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div class="fw-bold">Progresso da obra</div>
+                  <div class="text-muted" id="progressLabel">0%</div>
+                </div>
+                <div class="progress">
+                  <div class="progress-bar" role="progressbar" id="progressBar" style="width:0%"></div>
+                </div>
+              </div>
+
+              <!-- Dados do Cliente -->
+              <div class="nav-subtitle">Dados do Cliente</div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Nome da Obra (opcional)</label>
+                  <input type="text" id="title" class="form-control" placeholder="Ex.: Reforma Apart. 302">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Cliente</label>
+                  <select id="clientSelect" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Responsável</label>
+                  <input type="text" id="responsibleName" class="form-control" placeholder="Ex.: Eng. Ana Souza">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Status</label>
+                  <select id="status" class="form-select">
+                    <option value="Em andamento">Em andamento</option>
+                    <option value="Concluida">Concluída</option>
+                    <option value="Pausada">Pausada</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Data de Início</label>
+                  <input type="date" id="startDate" class="form-control" required/>
+                  <div class="invalid-feedback">Informe a data.</div>
+                </div>
+              </div>
+
+              <!-- Observações -->
+              <div class="row g-3 mb-3">
+                <div class="col-12">
+                  <label class="form-label" for="notes">Observações</label>
+                  <textarea id="notes" class="form-control" rows="3" placeholder="Anotações gerais sobre a obra..."></textarea>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Orçamento -->
+              <div class="nav-subtitle mt-2">Orçamento</div>
+              <div class="row g-3">
+                <div class="col-12 col-md-3 d-flex align-items-center">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="usePresetSwitch">
+                    <label class="form-check-label" for="usePresetSwitch">Usar preset?</label>
+                  </div>
+                </div>
+                <div class="col-12 col-md-9" id="presetWrap" style="display:none">
+                  <label class="form-label">Preset de orçamento</label>
+                  <select id="presetSelect" class="form-select"></select>
+                </div>
+              </div>
+
+              <!-- Orçamento Manual -->
+              <div id="manualWrap" class="mt-3">
+                <div class="subtle-box mb-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="fw-bold">Materiais</div>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="btnAddMat"><i class="bi bi-plus-lg"></i> Adicionar material</button>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-mini">
+                      <thead class="table-light">
+                        <tr>
+                          <th style="width:42%">Nome do material</th>
+                          <th>Valor do m² (R$)</th>
+                          <th>m²</th>
+                          <th style="width:60px"></th>
+                        </tr>
+                      </thead>
+                      <tbody id="matBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="subtle-box mb-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="fw-bold">Mão de obra</div>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="btnAddLabor"><i class="bi bi-plus-lg"></i> Adicionar mão de obra</button>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-mini">
+                      <thead class="table-light">
+                        <tr><th style="width:55%">Nome</th><th>Valor (R$)</th><th style="width:60px"></th></tr>
+                      </thead>
+                      <tbody id="laborBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label">Desconto (R$)</label>
+                    <input type="number" class="form-control" id="discountInput" step="0.01" min="0" value="0">
+                  </div>
+                  <div class="col-12 col-md-8 d-flex align-items-end">
+                    <div class="ms-auto">
+                      <span class="badge rounded-pill badge-soft me-2">Materiais: <strong id="sumMat">R$ 0,00</strong></span>
+                      <span class="badge rounded-pill badge-soft me-2">Mão de obra: <strong id="sumLabor">R$ 0,00</strong></span>
+                      <span class="badge rounded-pill bg-success text-white">Total: <strong id="sumTotal">R$ 0,00</strong></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- CHECKLIST -->
+              <div class="nav-subtitle mt-2">Checklist</div>
+              <div class="row g-2 align-items-end mb-2">
+                <div class="col-12 col-md-9">
+                  <label class="form-label">Adicionar tarefa</label>
+                  <input type="text" id="taskInput" class="form-control" placeholder="Ex.: Fundação, Estrutura, Acabamento...">
+                </div>
+                <div class="col-12 col-md-3">
+                  <button type="button" id="btnAddTask" class="btn btn-outline-success w-100"><i class="bi bi-plus-lg"></i> Adicionar</button>
+                </div>
+              </div>
+              <div id="checklistBox" class="vstack gap-2"></div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-brand">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  (function(){
+    'use strict';
+
+    // ===== Helpers =====
+    function $(sel, ctx){ return (ctx||document).querySelector(sel); }
+    function $$(sel, ctx){ return Array.prototype.slice.call((ctx||document).querySelectorAll(sel)); }
+    function fmtDateBR(iso){ try{ return new Date(iso).toLocaleDateString('pt-BR'); }catch(_e){ return '-'; } }
+    function ymd(d){ const dt=new Date(d); const m=String(dt.getMonth()+1).padStart(2,'0'); const day=String(dt.getDate()).padStart(2,'0'); return dt.getFullYear()+'-'+m+'-'+day; }
+    function apiJson(url, opts){
+      return fetch(url, opts||{}).then(function(r){
+        if(!r.ok){ return r.text().then(function(t){ throw new Error('HTTP '+r.status+' – '+(t||r.statusText)); }); }
+        return r.json();
+      });
+    }
+    function moneyBR(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+
+    // ===== APIs =====
+    var API_WORKS = '/api/works';
+    var API_CLIENTS = '/api/clients';
+    var API_PRESETS = '/api/budget-presets';
+
+    // ===== Elements =====
+    var els = {
+      worksTbody: $('#worksTbody'),
+      search: $('#searchInput'),
+      statusFilter: $('#statusFilter'),
+      clearFilters: $('#clearFilters'),
+
+      kpiObras: $('#kpiObras'),
+      kpiMedia: $('#kpiMedia'),
+      kpiConcluidas: $('#kpiConcluidas'),
+      kpiPausadas: $('#kpiPausadas'),
+
+      // modal
+      modalEl: $('#workModal'),
+      modalLabel: $('#workModalLabel'),
+      form: $('#workForm'),
+      workId: $('#workId'),
+      title: $('#title'),
+      clientSelect: $('#clientSelect'),
+      responsibleName: $('#responsibleName'),
+      status: $('#status'),
+      startDate: $('#startDate'),
+      notes: $('#notes'), // <-- Observações
+
+      // orçamento
+      usePresetSwitch: $('#usePresetSwitch'),
+      presetWrap: $('#presetWrap'),
+      presetSelect: $('#presetSelect'),
+      manualWrap: $('#manualWrap'),
+      matBody: $('#matBody'),
+      laborBody: $('#laborBody'),
+      btnAddMat: $('#btnAddMat'),
+      btnAddLabor: $('#btnAddLabor'),
+      discountInput: $('#discountInput'),
+      sumMat: $('#sumMat'),
+      sumLabor: $('#sumLabor'),
+      sumTotal: $('#sumTotal'),
+
+      // checklist
+      taskInput: $('#taskInput'),
+      btnAddTask: $('#btnAddTask'),
+      checklistBox: $('#checklistBox'),
+      progressBar: $('#progressBar'),
+      progressLabel: $('#progressLabel'),
+
+      btnNovaObra: $('#btnNovaObra'),
+      collapseNav: $('#collapseNav')
+    };
+
+    // ===== State =====
+    var state = {
+      list: [],
+      clients: [],
+      presets: [],
+      localChecklist: [],
+      localBudget: { materials: [], labor: [], discount: 0 }
+    };
+
+    // ===== Data =====
+    function fetchWorks(){ return apiJson(API_WORKS).then(function(r){ return r.data||r; }).catch(function(){ return []; }); }
+    function fetchClients(){ return apiJson(API_CLIENTS).then(function(r){ return r.data||r; }).catch(function(){ return []; }); }
+    function fetchPresets(){ return apiJson(API_PRESETS).then(function(r){ return r.data||r; }).catch(function(){ return []; }); }
+
+    // ===== Checklist =====
+    function calcProgressFromArray(arr){
+      var total=(arr||[]).length, done=(arr||[]).filter(function(i){return !!i.done;}).length;
+      return total?Math.round((done*100)/total):0;
+    }
+    function setProgressUI(percent){
+      percent=Math.max(0,Math.min(100,Number(percent||0)));
+      els.progressBar.style.width=percent+'%'; els.progressLabel.textContent=percent+'%';
+    }
+    function taskRow(item, isEditMode){
+      var li=document.createElement('div');
+      li.className='check-row'+(item.done?' done':'');
+      li.setAttribute('data-id', item._id||'');
+      li.innerHTML=
+        '<input type="checkbox" class="form-check-input chk" '+(item.done?'checked':'')+'>'+
+        '<div class="check-title">'+(item.title||'')+'</div>'+
+        '<div class="d-flex gap-2"><button type="button" class="btn btn-sm btn-outline-danger btn-del"><i class="bi bi-trash"></i></button></div>';
+      var chk=li.querySelector('.chk'); var btnDel=li.querySelector('.btn-del');
+      chk.addEventListener('change', function(){
+        var id=els.workId.value;
+        if(isEditMode && id){
+          var itemId=li.getAttribute('data-id'); if(!itemId) return;
+          fetch(API_WORKS+'/'+id+'/checklist/'+itemId+'/toggle',{method:'PATCH'})
+            .then(function(r){return r.json();})
+            .then(function(updated){
+              renderChecklist(updated.checklist||[],true); setProgressUI(updated.progressPercent||0); refreshListOnly(updated._id,updated);
+            }).catch(function(err){console.error(err); alert('Erro ao alternar item.');});
+        }else{
+          item.done=!!chk.checked; li.classList.toggle('done',item.done); setProgressUI(calcProgressFromArray(state.localChecklist));
+        }
+      });
+      btnDel.addEventListener('click', function(){
+        var id=els.workId.value;
+        if(isEditMode && id){
+          var itemId=li.getAttribute('data-id'); if(!itemId) return;
+          fetch(API_WORKS+'/'+id+'/checklist/'+itemId,{method:'DELETE'})
+            .then(function(r){return r.json();})
+            .then(function(updated){
+              renderChecklist(updated.checklist||[],true); setProgressUI(updated.progressPercent||0); refreshListOnly(updated._id,updated);
+            }).catch(function(err){console.error(err); alert('Erro ao remover item.');});
+        }else{
+          state.localChecklist = state.localChecklist.filter(function(x){return x!==item;});
+          li.remove(); setProgressUI(calcProgressFromArray(state.localChecklist));
+        }
+      });
+      return li;
+    }
+    function renderChecklist(arr, isEditMode){
+      els.checklistBox.innerHTML=''; (arr||[]).forEach(function(it){ els.checklistBox.appendChild(taskRow(it,!!isEditMode)); });
+    }
+
+    // ===== Orçamento Manual =====
+    function rowMaterial(m){
+      var tr=document.createElement('tr');
+      tr.innerHTML=
+        '<td><input type="text" class="form-control inp-name" placeholder="Nome do material" value="'+(m.name||'')+'"></td>'+
+        '<td style="max-width:160px"><input type="number" class="form-control inp-price" step="0.01" min="0" value="'+(m.pricePerM2||0)+'"></td>'+
+        '<td style="max-width:140px"><input type="number" class="form-control inp-area" step="0.01" min="0" value="'+(m.areaM2||0)+'"></td>'+
+        '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger btn-del"><i class="bi bi-trash"></i></button></td>';
+      var inpName=tr.querySelector('.inp-name');
+      var inpPrice=tr.querySelector('.inp-price');
+      var inpArea=tr.querySelector('.inp-area');
+      var btnDel=tr.querySelector('.btn-del');
+      function sync(){
+        m.name=(inpName.value||'').trim();
+        m.pricePerM2=Number(inpPrice.value||0);
+        m.areaM2=Number(inpArea.value||0);
+        updateBudgetSums();
+      }
+      inpName.addEventListener('input', sync);
+      inpPrice.addEventListener('input', sync);
+      inpArea.addEventListener('input', sync);
+      btnDel.addEventListener('click', function(){
+        state.localBudget.materials = state.localBudget.materials.filter(function(x){return x!==m;});
+        tr.remove(); updateBudgetSums();
+      });
+      return tr;
+    }
+    function rowLabor(l){
+      var tr=document.createElement('tr');
+      tr.innerHTML=
+        '<td><input type="text" class="form-control inp-name" placeholder="Nome" value="'+(l.name||'')+'"></td>'+
+        '<td style="max-width:200px"><input type="number" class="form-control inp-price" step="0.01" min="0" value="'+(l.price||0)+'"></td>'+
+        '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger btn-del"><i class="bi bi-trash"></i></button></td>';
+      var inpName=tr.querySelector('.inp-name');
+      var inpPrice=tr.querySelector('.inp-price');
+      var btnDel=tr.querySelector('.btn-del');
+      function sync(){ l.name=(inpName.value||'').trim(); l.price=Number(inpPrice.value||0); updateBudgetSums(); }
+      inpName.addEventListener('input', sync);
+      inpPrice.addEventListener('input', sync);
+      btnDel.addEventListener('click', function(){
+        state.localBudget.labor = state.localBudget.labor.filter(function(x){return x!==l;});
+        tr.remove(); updateBudgetSums();
+      });
+      return tr;
+    }
+    function updateBudgetSums(){
+      var sumM = state.localBudget.materials.reduce(function(a,m){ return a + Number(m.pricePerM2||0)*Number(m.areaM2||0); }, 0);
+      var sumL = state.localBudget.labor.reduce(function(a,l){ return a + Number(l.price||0); }, 0);
+      var discount = Number(els.discountInput.value || 0);
+      els.sumMat.textContent = moneyBR(sumM);
+      els.sumLabor.textContent = moneyBR(sumL);
+      els.sumTotal.textContent = moneyBR(Math.max(0, sumM + sumL - discount));
+    }
+    function clearBudgetUI(){
+      els.matBody.innerHTML=''; els.laborBody.innerHTML=''; els.discountInput.value=0;
+      state.localBudget={ materials:[], labor:[], discount:0 }; updateBudgetSums();
+    }
+    function loadManualBudgetToUI(bm){
+      clearBudgetUI();
+      (bm.materials||[]).forEach(function(m){
+        var mm={ name:m.name||'', pricePerM2:Number(m.pricePerM2||0), areaM2:Number(m.areaM2||0) };
+        state.localBudget.materials.push(mm); els.matBody.appendChild(rowMaterial(mm));
+      });
+      (bm.labor||[]).forEach(function(l){
+        var ll={ name:l.name||'', price:Number(l.price||0) };
+        state.localBudget.labor.push(ll); els.laborBody.appendChild(rowLabor(ll));
+      });
+      var disc=Number(bm.discount||0); els.discountInput.value=disc; state.localBudget.discount=disc;
+      updateBudgetSums();
+    }
+
+    // ===== Render tabela/KPIs =====
+    function row(w){
+      var stPill='<span class="status-pill status-'+(w.status||'')+'">'+(w.status||'')+'</span>';
+      var clientName=(w.clientSnapshot&&w.clientSnapshot.name)?w.clientSnapshot.name:(w.clientName||w.title||'—');
+      var prog=Number(w.progressPercent||0);
+      return ''+
+      '<tr>'+
+        '<td>'+clientName+'</td>'+
+        '<td>'+fmtDateBR(w.createdAt||new Date())+'</td>'+
+        '<td>'+stPill+'</td>'+
+        '<td style="min-width:200px"><div class="progress" style="height:8px"><div class="progress-bar" style="width:'+prog+'%"></div></div><div class="small text-muted mt-1">'+prog+'%</div></td>'+
+        '<td class="text-end">'+
+          '<button class="btn btn-sm btn-outline-secondary me-2" data-act="edit" data-id="'+w._id+'"><i class="bi bi-pencil"></i> Editar</button>'+
+          '<button class="btn btn-sm btn-outline-danger" data-act="delete" data-id="'+w._id+'"><i class="bi bi-trash"></i> Excluir</button>'+
+        '</td>'+
+      '</tr>';
+    }
+    function renderRows(list){
+      var st=els.statusFilter&&els.statusFilter.value?els.statusFilter.value:'';
+      var q=els.search&&els.search.value?els.search.value.trim().toLowerCase():'';
+      var data=list.filter(function(w){
+        var okSt=st?(w.status===st):true;
+        var label=((w.clientSnapshot&&w.clientSnapshot.name)?w.clientSnapshot.name:(w.clientName||w.title||'')).toLowerCase();
+        var okQ=q?(label.indexOf(q)>=0||(w.status||'').toLowerCase().indexOf(q)>=0):true;
+        return okSt&&okQ;
+      });
+      if(!data.length){ els.worksTbody.innerHTML='<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma obra encontrada.</td></tr>'; return; }
+      els.worksTbody.innerHTML=data.map(row).join('');
+    }
+    function renderKpis(list){
+      var ativas=list.filter(function(w){return w.status!=='Concluida';}).length;
+      var concl=list.filter(function(w){return w.status==='Concluida';}).length;
+      var paus=list.filter(function(w){return w.status==='Pausada';}).length;
+      var media=list.length?Math.round(list.reduce(function(a,w){return a+Number(w.progressPercent||0);},0)/list.length):0;
+      els.kpiObras.textContent=ativas; els.kpiConcluidas.textContent=concl; els.kpiPausadas.textContent=paus; els.kpiMedia.textContent=media+'%';
+    }
+    function refresh(){
+      Promise.all([fetchWorks(), fetchClients(), fetchPresets()]).then(function(res){
+        state.list=res[0]||[]; state.clients=res[1]||[]; state.presets=res[2]||[];
+        renderRows(state.list); renderKpis(state.list);
+        els.clientSelect.innerHTML='<option value="">— Selecionar —</option>'+state.clients.map(function(c){return '<option value="'+c._id+'">'+(c.name||'')+'</option>';}).join('');
+        els.presetSelect.innerHTML='<option value="">— Selecionar —</option>'+state.presets.map(function(p){return '<option value="'+p._id+'">'+(p.name||'')+'</option>';}).join('');
+      }).catch(function(err){
+        console.error(err); els.worksTbody.innerHTML='<tr><td colspan="5" class="text-danger py-4">Erro ao carregar: '+err.message+'</td></tr>';
+      });
+    }
+    function refreshListOnly(id,updated){
+      var i=state.list.findIndex(function(w){return w._id===id;}); if(i>=0){ state.list[i]=updated; renderRows(state.list); renderKpis(state.list); }
+    }
+
+    // ===== Ações =====
+    function openNew(){
+      els.workId.value=''; els.modalLabel.textContent='Nova obra';
+      els.title.value=''; els.responsibleName.value='';
+      els.status.value='Em andamento'; els.startDate.value=ymd(new Date()); els.clientSelect.value='';
+      els.notes.value=''; // limpa observações
+
+      // orçamento
+      els.usePresetSwitch.checked=false; els.presetWrap.style.display='none'; els.presetSelect.value=''; els.manualWrap.style.display='';
+      clearBudgetUI();
+      // checklist
+      state.localChecklist=[]; renderChecklist(state.localChecklist,false); setProgressUI(0);
+      bootstrap.Modal.getOrCreateInstance(els.modalEl).show();
+    }
+    function openEdit(id){
+      apiJson(API_WORKS+'/'+id).then(function(w){
+        els.workId.value=w._id||''; els.modalLabel.textContent='Editar obra';
+        els.title.value=w.title||''; els.responsibleName.value=w.responsibleName||'';
+        els.status.value=w.status||'Em andamento';
+        els.startDate.value=w.createdAt?ymd(w.createdAt):ymd(new Date());
+        els.clientSelect.value=(w.client&&w.client._id)?w.client._id:(w.client||'');
+        els.notes.value = w.notes || w.observations || ''; // carrega observações
+
+        if(w.budgetPreset){
+          els.usePresetSwitch.checked=true; els.presetWrap.style.display=''; els.manualWrap.style.display='none';
+          els.presetSelect.value=(w.budgetPreset._id||w.budgetPreset);
+        }else{
+          els.usePresetSwitch.checked=false; els.presetWrap.style.display='none'; els.manualWrap.style.display='';
+          loadManualBudgetToUI(w.budgetManual||{materials:[],labor:[],discount:0});
+        }
+        renderChecklist(w.checklist||[],true); setProgressUI(w.progressPercent||0);
+        bootstrap.Modal.getOrCreateInstance(els.modalEl).show();
+      }).catch(function(err){ console.error(err); alert('Erro ao carregar obra.'); });
+    }
+    function onDelete(id){
+      if(!confirm('Deseja excluir esta obra?')) return;
+      fetch(API_WORKS+'/'+id,{method:'DELETE'}).then(function(){ refresh(); }).catch(function(err){ console.error(err); alert('Erro ao excluir.'); });
+    }
+
+    // ===== Eventos =====
+    document.addEventListener('DOMContentLoaded', function(){
+      if(els.search) els.search.addEventListener('input', function(){ clearTimeout(window.__tObra); window.__tObra=setTimeout(function(){ renderRows(state.list); },200); });
+      if(els.statusFilter) els.statusFilter.addEventListener('change', function(){ renderRows(state.list); });
+      if(els.clearFilters) els.clearFilters.addEventListener('click', function(){ els.search.value=''; els.statusFilter.value=''; renderRows(state.list); });
+
+      if(els.worksTbody){
+        els.worksTbody.addEventListener('click', function(e){
+          var btn=e.target.closest('button[data-act]'); if(!btn) return;
+          var id=btn.getAttribute('data-id'), act=btn.getAttribute('data-act');
+          if(act==='edit') openEdit(id); if(act==='delete') onDelete(id);
+        });
+      }
+
+      if(els.btnNovaObra) els.btnNovaObra.addEventListener('click', openNew);
+
+      if(els.usePresetSwitch){
+        els.usePresetSwitch.addEventListener('change', function(){
+          if(els.usePresetSwitch.checked){ els.presetWrap.style.display=''; els.manualWrap.style.display='none'; }
+          else { els.presetWrap.style.display='none'; els.manualWrap.style.display=''; }
+        });
+      }
+
+      if(els.btnAddMat){
+        els.btnAddMat.addEventListener('click', function(){
+          var obj={ name:'', pricePerM2:0, areaM2:0 };
+          state.localBudget.materials.push(obj); els.matBody.appendChild(rowMaterial(obj)); updateBudgetSums();
+        });
+      }
+      if(els.btnAddLabor){
+        els.btnAddLabor.addEventListener('click', function(){
+          var obj={ name:'', price:0 };
+          state.localBudget.labor.push(obj); els.laborBody.appendChild(rowLabor(obj)); updateBudgetSums();
+        });
+      }
+      if(els.discountInput){
+        els.discountInput.addEventListener('input', function(){ state.localBudget.discount=Number(els.discountInput.value||0); updateBudgetSums(); });
+      }
+
+      if(els.btnAddTask){
+        els.btnAddTask.addEventListener('click', function(){
+          var title=els.taskInput.value?els.taskInput.value.trim():'';
+          if(!title){ els.taskInput.focus(); return; }
+          var id=els.workId.value;
+          if(id){
+            fetch(API_WORKS+'/'+id+'/checklist',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title})})
+              .then(function(r){return r.json();})
+              .then(function(updated){
+                els.taskInput.value=''; renderChecklist(updated.checklist||[],true); setProgressUI(updated.progressPercent||0); refreshListOnly(updated._id,updated);
+              }).catch(function(err){ console.error(err); alert('Erro ao adicionar item.'); });
+          }else{
+            var item={ title:title, done:false }; state.localChecklist.push(item);
+            els.taskInput.value=''; els.checklistBox.appendChild(taskRow(item,false)); setProgressUI(calcProgressFromArray(state.localChecklist));
+          }
+        });
+      }
+
+      if(els.form){
+        els.form.addEventListener('submit', function(e){
+          e.preventDefault();
+          if(!els.form.checkValidity()){ els.form.classList.add('was-validated'); return; }
+
+          var payload={
+            title: (els.title.value||'').trim(),
+            responsibleName: (els.responsibleName.value||'').trim(),
+            client: els.clientSelect.value||null,
+            status: els.status.value||'Em andamento',
+            notes: (els.notes.value||'').trim() // inclui observações
+          };
+          var usePreset=!!els.usePresetSwitch.checked;
+          var id=els.workId.value;
+
+          if(usePreset){
+            payload.budgetPreset=els.presetSelect.value||null;
+            payload.budgetManual=null;
+          }else{
+            var bm={
+              materials: state.localBudget.materials
+                .filter(function(m){return (m.name||'').trim();})
+                .map(function(m){ return { name:m.name.trim(), pricePerM2:Number(m.pricePerM2||0), areaM2:Number(m.areaM2||0) }; }),
+              labor: state.localBudget.labor
+                .filter(function(l){return (l.name||'').trim();})
+                .map(function(l){ return { name:l.name.trim(), price:Number(l.price||0) }; }),
+              discount: Number(els.discountInput.value||0)
+            };
+            payload.budgetPreset=null; payload.budgetManual=bm;
+          }
+
+          var method=id?'PUT':'POST'; var url=id?(API_WORKS+'/'+id):API_WORKS;
+          if(!id){ payload.checklist=state.localChecklist.slice(); }
+
+          fetch(url,{method:method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+            .then(function(r){return r.json();})
+            .then(function(saved){ bootstrap.Modal.getOrCreateInstance(els.modalEl).hide(); refresh(); })
+            .catch(function(err){ console.error(err); alert('Erro ao salvar obra.'); });
+        });
+      }
+
+      if(els.modalEl){
+        els.modalEl.addEventListener('hidden.bs.modal', function(){
+          els.form.classList.remove('was-validated');
+          els.workId.value=''; els.taskInput.value=''; els.checklistBox.innerHTML='';
+          state.localChecklist=[]; setProgressUI(0);
+          els.usePresetSwitch.checked=false; els.presetWrap.style.display='none'; els.presetSelect.value='';
+          els.manualWrap.style.display=''; clearBudgetUI();
+          els.title.value=''; els.responsibleName.value='';
+          els.notes.value=''; // limpa observações ao fechar
+        });
+      }
+
+      // sidebar mini
+      if(els.collapseNav){
+        els.collapseNav.addEventListener('click', function(ev){
+          ev.preventDefault(); $('.sidebar').classList.toggle('mini');
+        });
+      }
+
+      refresh();
+    });
+  })();
+  </script>
+</body>
+</html>

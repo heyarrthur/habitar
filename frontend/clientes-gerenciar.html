@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>HABItar • Clientes</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --brand-green:#22c55e;--brand-green-600:#16a34a;--brand-green-100:#e9f9ef;
+      --soft-gray:#f6f7f9;--surface:#fff;--border:#e9ecf1;--muted:#98a2b3;--text:#0f172a;
+      --grad-accent:linear-gradient(135deg, rgba(34,197,94,.12), rgba(34,197,94,.04));
+      --tap:46px; /* altura mínima amigável ao toque */
+    }
+    body{
+      font-family:'Inter',system-ui;
+      background:radial-gradient(900px 500px at 120% 10%,var(--brand-green-100),transparent),var(--soft-gray);
+      color:var(--text);
+    }
+
+    /* Sidebar (desktop) */
+    .sidebar{
+      position:fixed;inset:0 auto 0 0;width:280px;background:var(--surface);
+      border-right:1px solid var(--border);padding:20px 16px;
+      display:flex;flex-direction:column;gap:10px;z-index:1030
+    }
+    .sidebar.mini{width:88px;align-items:center}
+    .brand{font-weight:900;display:flex;align-items:center;gap:10px;font-size:1.25rem}
+    .brand .dot{width:10px;height:10px;border-radius:999px;background:var(--brand-green);box-shadow:0 0 0 6px var(--brand-green-100)}
+    .brand-text{display:inline}
+    .nav-subtitle{text-transform:uppercase;font-size:.72rem;color:var(--muted);margin:8px 0 4px;letter-spacing:.08em}
+    .nav-link-custom{
+      border-radius:12px;padding:10px 12px;color:var(--text);font-weight:600;
+      display:flex;align-items:center;gap:12px;text-decoration:none;
+      transition:transform .18s,background-color .25s,box-shadow .25s
+    }
+    .nav-link-custom:hover{background:var(--brand-green-100);transform:translateX(2px);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .nav-link-custom.active{background:var(--grad-accent);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .divider{height:1px;background:var(--border);margin:10px 0}
+    .sidebar.mini .label, .sidebar.mini .nav-subtitle, .sidebar.mini .divider, .sidebar.mini #collapseNav .label{display:none!important}
+    .sidebar.mini .brand-text{display:none!important}
+    .sidebar.mini .nav-link-custom{justify-content:center;padding:10px}
+
+    /* Content */
+    .content{margin-left:280px;padding:28px}
+    .sidebar.mini ~ .content{margin-left:88px}
+
+    /* UI */
+    .btn-brand{background:var(--brand-green);color:#fff;border:none;border-radius:12px;padding:.625rem 1rem}
+    .btn-brand:hover{background:var(--brand-green-600)}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px}
+    .kpi-icon{width:40px;height:40px;border-radius:12px;background:var(--brand-green-100);display:grid;place-items:center;margin-bottom:8px}
+    .kpi-value{font-size:1.7rem;font-weight:900;letter-spacing:-.02em}
+    .kpi-label{color:var(--muted);font-size:.9rem;font-weight:600}
+    .toolbar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;position:sticky;top:12px;z-index:10}
+    .badge-soft{background:#f1f5f9;border:1px solid var(--border)}
+    .copybox{display:flex;gap:8px;align-items:center}
+    .copybox input{font-family:monospace}
+
+    /* Tamanhos mínimos para toque */
+    .btn,.form-control,.form-select,.input-group-text{min-height:var(--tap)}
+
+    /* -------- Galaxy Tab S10 FE (820–1280px) -------- */
+    @media (min-width:820px) and (max-width:1280px){
+      .sidebar{ width:260px; padding:18px 14px; }
+      .sidebar.mini{ width:88px; }
+      .content{ margin-left:260px; padding:22px; }
+      .sidebar.mini ~ .content{ margin-left:88px; }
+
+      .kpi-card{ padding:16px; }
+      .toolbar{ padding:12px; }
+
+      /* Modal confortável em tablet */
+      .modal-dialog{ max-width:900px; }
+    }
+
+    /* -------- Mobile & telas menores -------- */
+    @media (max-width:992px){
+      .sidebar{
+        position:sticky;top:0;width:100%;
+        border-right:none;border-bottom:1px solid var(--border);
+        padding:10px 12px;gap:8px
+      }
+      .content{margin-left:0;padding:18px}
+      header .btn{ width:100%; }                  /* botão "Novo cliente" full-width */
+      .toolbar{ top:0; border-radius:12px; }      /* gruda a toolbar no topo */
+      .table-responsive{ -webkit-overflow-scrolling:touch; } /* scroll suave */
+      .modal-dialog{ margin: .75rem; }            /* modal com margens amigáveis */
+    }
+
+    /* -------- XS muito estreito (<= 576px) -------- */
+    @media (max-width:576px){
+      /* Para caber melhor: escondemos "Contato" (2ª col) e "Criado" (5ª col) */
+      .table thead th:nth-child(2),
+      .table tbody td:nth-child(2),
+      .table thead th:nth-child(5),
+      .table tbody td:nth-child(5){ display:none; }
+
+      .kpi-card{ padding:14px; }
+      .kpi-value{ font-size:1.45rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> <span class="brand-text">HABItar</span></div>
+    <div class="divider"></div>
+
+    <div class="nav-subtitle">Geral</div>
+    <a class="nav-link-custom" href="./dashboard.html"><i class="bi bi-speedometer"></i> <span class="label">Dashboard</span></a>
+    <a class="nav-link-custom" href="./index.html"><i class="bi bi-people"></i> <span class="label">Equipe</span></a>
+
+    <div class="nav-subtitle mt-2">Clientes</div>
+    <a class="nav-link-custom active" href="./clientes-gerenciar.html"><i class="bi bi-person-lines-fill"></i> <span class="label">Gerenciar</span></a>
+
+    <div class="nav-subtitle mt-2">Obras</div>
+    <a class="nav-link-custom" href="./obras-gerenciar.html"><i class="bi bi-hammer"></i> <span class="label">Gerenciar</span></a>
+    <a class="nav-link-custom" href="./gerar-orcamento.html"><i class="bi bi-receipt"></i> <span class="label">Gerar Orçamento</span></a>
+
+    <div class="nav-subtitle mt-2">Financeiro</div>
+    <a class="nav-link-custom" href="./financeiro-faturamento.html"><i class="bi bi-cash-coin"></i> <span class="label">Faturamento</span></a>
+    <a class="nav-link-custom" href="./financeiro-estatisticas.html"><i class="bi bi-graph-up-arrow"></i> <span class="label">Estatísticas</span></a>
+
+    <div class="divider"></div>
+    <a class="nav-link-custom" href="#" id="collapseNav"><i class="bi bi-chevron-left"></i> <span class="label">Recolher navbar</span></a>
+  </aside>
+
+  <!-- Conteúdo -->
+  <main class="content">
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h1 class="h3 mb-1">Clientes</h1>
+        <div class="text-muted">Gerencie os clientes e credenciais do Portal do Cliente.</div>
+      </div>
+      <button class="btn btn-brand" id="btnNovo"><i class="bi bi-person-plus"></i> Novo cliente</button>
+    </header>
+
+    <!-- KPIs -->
+    <section class="row g-3 mb-3">
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-people"></i></div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-label">Total de clientes</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-person-check"></i></div><div class="kpi-value" id="kpiAtivos">0</div><div class="kpi-label">Ativos</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-person-x"></i></div><div class="kpi-value" id="kpiInativos">0</div><div class="kpi-label">Inativos</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-link-45deg"></i></div><div class="kpi-value">Portal</div><div class="kpi-label">Cada cliente tem link</div></div></div>
+    </section>
+
+    <!-- Toolbar -->
+    <section class="toolbar mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-8">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="searchInput" type="text" class="form-control" placeholder="Buscar por nome, email, username..."/>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <select id="statusFilter" class="form-select">
+            <option value="">Todos</option>
+            <option>Ativo</option>
+            <option>Inativo</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-1">
+          <button class="btn btn-outline-secondary w-100" id="clearFilters"><i class="bi bi-x-circle"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lista -->
+    <section class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Cliente</th>
+                <th>Contato</th>
+                <th>Username</th>
+                <th>Status</th>
+                <th>Criado</th>
+                <th class="text-end">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody">
+              <tr><td colspan="6" class="text-center py-4 text-muted">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal: Novo/Editar Cliente -->
+    <div class="modal fade" id="clientModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="clientModalLabel">Novo cliente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <form id="clientForm" class="needs-validation" novalidate>
+            <div class="modal-body">
+              <input type="hidden" id="clientId"/>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nome</label>
+                  <input type="text" id="name" class="form-control" required>
+                  <div class="invalid-feedback">Informe o nome.</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Empresa (opcional)</label>
+                  <input type="text" id="company" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">E-mail</label>
+                  <input type="email" id="email" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Telefone</label>
+                  <input type="text" id="phone" class="form-control">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Status</label>
+                  <select id="status" class="form-select">
+                    <option>Ativo</option>
+                    <option>Inativo</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Credenciais (somente exibição após criar ou resetar) -->
+              <div id="credsBox" class="mt-3" style="display:none">
+                <div class="alert alert-success d-flex align-items-center gap-2 mb-2"><i class="bi bi-key"></i> Credenciais geradas! Mostradas uma única vez. Copie e envie ao cliente.</div>
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label class="form-label">Username</label>
+                    <div class="input-group">
+                      <input type="text" id="showUsername" class="form-control" readonly>
+                      <button class="btn btn-outline-secondary" type="button" data-copy="#showUsername"><i class="bi bi-clipboard"></i></button>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Senha temporária</label>
+                    <div class="input-group">
+                      <input type="text" id="showPassword" class="form-control" readonly>
+                      <button class="btn btn-outline-secondary" type="button" data-copy="#showPassword"><i class="bi bi-clipboard"></i></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <label class="form-label">Link do Portal do Cliente</label>
+                  <div class="input-group">
+                    <input type="text" id="showPortalLink" class="form-control" readonly>
+                    <button class="btn btn-outline-secondary" type="button" data-copy="#showPortalLink"><i class="bi bi-clipboard"></i></button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+              <button type="submit" class="btn btn-brand">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    function $(s,c){return (c||document).querySelector(s);}
+    function $$(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s));}
+    function api(url, opts){ return fetch(url, opts||{}).then(r=>{ if(!r.ok) return r.text().then(t=>{throw new Error('HTTP '+r.status+' '+t)}); return r.json(); }); }
+    function dateBR(d){ try{return new Date(d).toLocaleDateString('pt-BR');}catch(_e){return '-';} }
+
+    const API = {
+      clients: '/api/clients'
+    };
+    const els = {
+      tbody: $('#tbody'),
+      kpiTotal: $('#kpiTotal'),
+      kpiAtivos: $('#kpiAtivos'),
+      kpiInativos: $('#kpiInativos'),
+      search: $('#searchInput'),
+      statusFilter: $('#statusFilter'),
+      clearFilters: $('#clearFilters'),
+      btnNovo: $('#btnNovo'),
+      // modal
+      modalEl: $('#clientModal'),
+      modalLabel: $('#clientModalLabel'),
+      form: $('#clientForm'),
+      id: $('#clientId'),
+      name: $('#name'),
+      company: $('#company'),
+      email: $('#email'),
+      phone: $('#phone'),
+      status: $('#status'),
+      credsBox: $('#credsBox'),
+      showUsername: $('#showUsername'),
+      showPassword: $('#showPassword'),
+      showPortalLink: $('#showPortalLink'),
+      collapseNav: $('#collapseNav')
+    };
+
+    const state = { list: [] };
+
+    function portalLinkFor(id){
+      // ajuste a base do link conforme seu deploy
+      const base = location.origin + '/private/client/index.html?client=';
+      return base + id;
+    }
+
+    function row(c){
+      const badge = c.status === 'Ativo' ? '<span class="badge rounded-pill bg-success-subtle text-success">Ativo</span>'
+                                         : '<span class="badge rounded-pill bg-secondary-subtle text-secondary">Inativo</span>';
+      return ''+
+      '<tr>'+
+        '<td><div class="fw-semibold">'+(c.name||'—')+'</div><div class="text-muted small">'+(c.company||'')+'</div></td>'+
+        '<td><div class="small"><i class="bi bi-envelope"></i> '+(c.email||'—')+'</div><div class="small"><i class="bi bi-telephone"></i> '+(c.phone||'—')+'</div></td>'+
+        '<td><code>'+ (c.username||'—') +'</code></td>'+
+        '<td>'+ badge +'</td>'+
+        '<td>'+ dateBR(c.createdAt) +'</td>'+
+        '<td class="text-end">'+
+          '<div class="btn-group">'+
+            '<button class="btn btn-sm btn-outline-secondary" data-act="edit" data-id="'+c._id+'"><i class="bi bi-pencil"></i></button>'+
+            '<button class="btn btn-sm btn-outline-warning" data-act="reset" data-id="'+c._id+'"><i class="bi bi-key"></i></button>'+
+            '<button class="btn btn-sm btn-outline-info" data-act="portal" data-id="'+c._id+'"><i class="bi bi-link-45deg"></i></button>'+
+            '<button class="btn btn-sm btn-outline-danger" data-act="del" data-id="'+c._id+'"><i class="bi bi-trash"></i></button>'+
+          '</div>'+
+        '</td>'+
+      '</tr>';
+    }
+
+    function render(list){
+      // filtros client-side
+      const q = (els.search.value||'').trim().toLowerCase();
+      const st = els.statusFilter.value || '';
+      const data = list.filter(c=>{
+        const okS = !st || c.status === st;
+        const hay = (c.name||'')+' '+(c.email||'')+' '+(c.username||'');
+        const okQ = !q || hay.toLowerCase().includes(q);
+        return okS && okQ;
+      });
+      if(!data.length){
+        els.tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum cliente encontrado.</td></tr>';
+        return;
+      }
+      els.tbody.innerHTML = data.map(row).join('');
+    }
+
+    function renderKpis(list){
+      els.kpiTotal.textContent = list.length;
+      els.kpiAtivos.textContent = list.filter(c=>c.status==='Ativo').length;
+      els.kpiInativos.textContent = list.filter(c=>c.status!=='Ativo').length;
+    }
+
+    function refresh(){
+      api(API.clients).then(res=>{
+        state.list = res.data || res; // rota retorna {data:[]} na nossa versão
+        render(state.list);
+        renderKpis(state.list);
+      }).catch(err=>{
+        console.error(err);
+        els.tbody.innerHTML = '<tr><td colspan="6" class="text-danger py-4">Erro ao carregar clientes.</td></tr>';
+      });
+    }
+
+    // Ações
+    function openNew(){
+      els.modalLabel.textContent = 'Novo cliente';
+      els.id.value = '';
+      els.name.value = '';
+      els.company.value = '';
+      els.email.value = '';
+      els.phone.value = '';
+      els.status.value = 'Ativo';
+      els.credsBox.style.display = 'none';
+      bootstrap.Modal.getOrCreateInstance(els.modalEl).show();
+    }
+
+    function openEdit(id){
+      api(API.clients + '/' + id).then(c=>{
+        els.modalLabel.textContent = 'Editar cliente';
+        els.id.value = c._id;
+        els.name.value = c.name || '';
+        els.company.value = c.company || '';
+        els.email.value = c.email || '';
+        els.phone.value = c.phone || '';
+        els.status.value = c.status || 'Ativo';
+        els.credsBox.style.display = 'none'; // não mostramos credenciais em claro aqui
+        bootstrap.Modal.getOrCreateInstance(els.modalEl).show();
+      }).catch(err=>{
+        console.error(err); alert('Erro ao carregar cliente.');
+      });
+    }
+
+    function onDelete(id){
+      if(!confirm('Excluir este cliente? Esta ação é irreversível.')) return;
+      fetch(API.clients + '/' + id, { method:'DELETE' })
+        .then(()=>refresh()).catch(err=>{ console.error(err); alert('Erro ao excluir.'); });
+    }
+
+    function onResetPassword(id){
+      if(!confirm('Gerar nova senha temporária para este cliente?')) return;
+      fetch(API.clients + '/' + id + '/reset-password', { method: 'PATCH' })
+        .then(r=>r.json()).then(data=>{
+          // mostra rapidamente num modal
+          els.modalLabel.textContent = 'Senha resetada';
+          els.id.value = id;
+          els.credsBox.style.display = '';
+          els.showUsername.value = (state.list.find(c=>c._id===id)?.username) || '';
+          els.showPassword.value = data.tempPassword || '';
+          els.showPortalLink.value = portalLinkFor(id);
+          bootstrap.Modal.getOrCreateInstance(els.modalEl).show();
+        }).catch(err=>{
+          console.error(err); alert('Erro ao resetar senha.');
+        });
+    }
+
+    function onCopy(selector){
+      try{
+        const input = document.querySelector(selector);
+        input.select(); input.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+      }catch(_e){
+        navigator.clipboard?.writeText(document.querySelector(selector).value).catch(()=>{});
+      }
+    }
+
+    // Eventos
+    document.addEventListener('DOMContentLoaded', function(){
+      // filtros
+      els.search.addEventListener('input', ()=>{ clearTimeout(window.__t); window.__t=setTimeout(()=>render(state.list), 150); });
+      els.statusFilter.addEventListener('change', ()=>render(state.list));
+      els.clearFilters.addEventListener('click', ()=>{ els.search.value=''; els.statusFilter.value=''; render(state.list); });
+
+      // tabela
+      els.tbody.addEventListener('click', function(e){
+        const btn = e.target.closest('button[data-act]'); if(!btn) return;
+        const id = btn.getAttribute('data-id'); const act = btn.getAttribute('data-act');
+        if(act==='edit') return openEdit(id);
+        if(act==='del') return onDelete(id);
+        if(act==='reset') return onResetPassword(id);
+        if(act==='portal'){ const link = portalLinkFor(id); prompt('Link do Portal do Cliente:', link); }
+      });
+
+      // novo
+      els.btnNovo.addEventListener('click', openNew);
+
+      // copiar
+      document.body.addEventListener('click', function(e){
+        const b = e.target.closest('[data-copy]'); if(!b) return;
+        onCopy(b.getAttribute('data-copy'));
+      });
+
+      // submit
+      els.form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        if(!els.form.checkValidity()){ els.form.classList.add('was-validated'); return; }
+
+        const payload = {
+          name: els.name.value.trim(),
+          company: els.company.value.trim(),
+          email: els.email.value.trim(),
+          phone: els.phone.value.trim(),
+          status: els.status.value
+        };
+
+        const id = els.id.value;
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? (API.clients + '/' + id) : API.clients;
+
+        fetch(url, { method, headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) })
+          .then(r=>r.json())
+          .then(data=>{
+            if(method === 'POST'){
+              // Mostra as credenciais retornadas UMA VEZ
+              els.modalLabel.textContent = 'Cliente criado';
+              els.credsBox.style.display = '';
+              els.showUsername.value = data.client?.username || '';
+              els.showPassword.value = data.tempPassword || '';
+              els.showPortalLink.value = data.client? portalLinkFor(data.client._id) : '';
+              // mantém modal aberto para copiar
+              els.id.value = data.client?._id || '';
+            }else{
+              bootstrap.Modal.getOrCreateInstance(els.modalEl).hide();
+            }
+            refresh();
+          })
+          .catch(err=>{
+            console.error(err); alert('Erro ao salvar. Verifique os campos.');
+          });
+      });
+
+      // recolher sidebar
+      const collapse = document.querySelector('#collapseNav');
+      if(collapse){
+        collapse.addEventListener('click', function(ev){
+          ev.preventDefault();
+          document.querySelector('.sidebar').classList.toggle('mini');
+        });
+      }
+
+      refresh();
+    });
+  })();
+  </script>
+</body>
+</html>

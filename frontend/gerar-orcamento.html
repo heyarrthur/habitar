@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HABItar • Gerar Orçamento (Presets)</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --brand-green:#22c55e;--brand-green-600:#16a34a;--brand-green-700:#15803d;
+      --brand-green-100:#e9f9ef;--brand-green-50:#f3fcf6;
+      --soft-gray:#f6f7f9;--surface:#fff;--border:#e9ecf1;--muted:#98a2b3;--text:#0f172a;
+      --grad-accent:linear-gradient(135deg, rgba(34,197,94,.12), rgba(34,197,94,.04));
+      --tap:46px;
+    }
+    body{
+      font-family:'Inter',system-ui;
+      background:radial-gradient(900px 500px at 120% 10%,var(--brand-green-50),transparent),var(--soft-gray);
+      color:var(--text)
+    }
+
+    /* Sidebar */
+    .sidebar{
+      position:fixed;inset:0 auto 0 0;width:280px;background:var(--surface);
+      border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:10px;z-index:1030
+    }
+    .sidebar.mini{width:88px;align-items:center}
+    .brand{font-weight:900;display:flex;align-items:center;gap:10px;font-size:1.25rem}
+    .brand .dot{width:10px;height:10px;border-radius:999px;background:var(--brand-green);box-shadow:0 0 0 6px var(--brand-green-100)}
+    .brand-text{display:inline}
+    .nav-subtitle{text-transform:uppercase;font-size:.72rem;color:var(--muted);margin:8px 0 4px;letter-spacing:.08em}
+    .nav-link-custom{
+      border-radius:12px;padding:10px 12px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:12px;text-decoration:none;
+      transition:transform .18s cubic-bezier(.2,.8,.2,1),background-color .25s ease,box-shadow .25s ease
+    }
+    .nav-link-custom:hover{background:var(--brand-green-100);transform:translateX(2px);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .nav-link-custom.active{background:var(--grad-accent);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .divider{height:1px;background:var(--border);margin:10px 0}
+    .sidebar.mini .label, .sidebar.mini .nav-subtitle, .sidebar.mini .divider, .sidebar.mini #collapseNav .label{display:none!important}
+    .sidebar.mini .brand-text{display:none!important}
+    .sidebar.mini .nav-link-custom{justify-content:center;padding:10px}
+
+    /* Content */
+    .content{margin-left:280px;padding:28px}
+    .sidebar.mini ~ .content{margin-left:88px}
+
+    .btn-brand{background:var(--brand-green);color:#fff;border:none;border-radius:12px;padding:.625rem 1rem}
+    .btn-brand:hover{background:var(--brand-green-600)}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px}
+    .kpi-icon{width:40px;height:40px;border-radius:12px;background:var(--brand-green-100);display:grid;place-items:center;margin-bottom:8px}
+    .kpi-value{font-size:1.7rem;font-weight:900;letter-spacing:-.02em}
+    .kpi-label{color:var(--muted);font-size:.9rem;font-weight:600}
+    .toolbar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;position:sticky;top:12px;z-index:10}
+    .subtle-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px}
+    .chip{display:inline-flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--border);border-radius:999px;padding:4px 10px;font-size:.85rem}
+
+    /* Touch size */
+    .btn, .form-control, .form-select, .input-group-text{ min-height: var(--tap); }
+
+    /* Tablet S10 FE (820–1280px) */
+    @media (min-width:820px) and (max-width:1280px){
+      .sidebar{ width:260px; padding:18px 14px; }
+      .sidebar.mini{ width:88px; }
+      .content{ margin-left:260px; padding:22px; }
+      .sidebar.mini ~ .content{ margin-left:88px; }
+      .nav-link-custom{ padding:12px 12px; }
+      .kpi-card{ padding:16px; }
+      .toolbar{ padding:12px; }
+      .subtle-box{ padding:12px; }
+    }
+
+    /* Mobile */
+    @media (max-width:992px){
+      .sidebar{position:sticky;top:0;width:100%;border-right:none;border-bottom:1px solid var(--border)}
+      .content{margin-left:0;padding:18px}
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> <span class="brand-text">HABItar</span></div>
+    <div class="divider"></div>
+
+    <div class="nav-subtitle">Geral</div>
+    <a class="nav-link-custom" href="./dashboard.html" title="Dashboard"><i class="bi bi-speedometer"></i> <span class="label">Dashboard</span></a>
+    <a class="nav-link-custom" href="./index.html" title="Equipe"><i class="bi bi-people"></i> <span class="label">Equipe</span></a>
+
+    <div class="nav-subtitle mt-2">Clientes</div>
+    <a class="nav-link-custom" href="./clientes-gerenciar.html" title="Clientes – Gerenciar"><i class="bi bi-person-lines-fill"></i> <span class="label">Gerenciar</span></a>
+
+    <div class="nav-subtitle mt-2">Obras</div>
+    <a class="nav-link-custom" href="./obras-gerenciar.html" title="Obras – Gerenciar"><i class="bi bi-hammer"></i> <span class="label">Gerenciar</span></a>
+    <a class="nav-link-custom active" href="./gerar-orcamento.html" title="Gerar Orçamento"><i class="bi bi-receipt"></i> <span class="label">Gerar Orçamento</span></a>
+
+    <div class="nav-subtitle mt-2">Financeiro</div>
+    <a class="nav-link-custom" href="./financeiro-faturamento.html" title="Faturamento"><i class="bi bi-cash-coin"></i> <span class="label">Faturamento</span></a>
+    <a class="nav-link-custom" href="./financeiro-estatisticas.html" title="Estatísticas"><i class="bi bi-graph-up-arrow"></i> <span class="label">Estatísticas</span></a>
+
+    <div class="divider"></div>
+    <a class="nav-link-custom" href="#" id="collapseNav"><i class="bi bi-chevron-left"></i> <span class="label">Recolher navbar</span></a>
+  </aside>
+
+  <!-- Conteúdo -->
+  <main class="content">
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h1 class="h3 mb-1">Gerar Orçamento (Pré-configurações)</h1>
+        <div class="text-muted">Cadastre e reutilize configurações de orçamento com materiais, mão de obra e desconto.</div>
+      </div>
+      <button class="btn btn-brand" data-bs-toggle="modal" data-bs-target="#presetModal">
+        <i class="bi bi-plus-circle me-1"></i> Nova configuração
+      </button>
+    </header>
+
+    <!-- KPIs -->
+    <section class="row g-3 mb-3">
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-collection"></i></div><div class="kpi-value" id="kpiTotal">0</div><div class="kpi-label">Total de Presets</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-box-seam"></i></div><div class="kpi-value" id="kpiMateriais">0</div><div class="kpi-label">Materiais (itens)</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-person-gear"></i></div><div class="kpi-value" id="kpiMaoObra">0</div><div class="kpi-label">Mão de obra (itens)</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-cash-stack"></i></div><div class="kpi-value" id="kpiTicket">R$ 0</div><div class="kpi-label">Ticket médio (estimado)</div></div></div>
+    </section>
+
+    <!-- Toolbar -->
+    <section class="toolbar mb-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-12 col-md-8">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="searchInput" type="text" class="form-control" placeholder="Buscar preset por nome" />
+          </div>
+        </div>
+        <div class="col-12 col-md-4 text-end">
+          <button class="btn btn-outline-secondary" id="clearFilters"><i class="bi bi-x-circle"></i> Limpar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lista de presets -->
+    <section class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div id="presetList" class="row g-3"></div>
+      </div>
+    </section>
+
+    <!-- Modal: Adicionar/Editar Preset -->
+    <div class="modal fade" id="presetModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="presetModalLabel">Nova configuração</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <form id="presetForm" class="needs-validation" novalidate>
+            <div class="modal-body">
+              <input type="hidden" id="presetId" />
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nome da configuração</label>
+                  <input type="text" id="presetName" class="form-control" required />
+                  <div class="invalid-feedback">Informe um nome.</div>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                  <div class="chip"><i class="bi bi-lightning-charge"></i> Use essas configurações em “Obras → Gerenciar”</div>
+                </div>
+              </div>
+
+              <div class="nav-subtitle">Materiais</div>
+              <div id="materialsList" class="vstack gap-2 mb-2"></div>
+              <button type="button" class="btn btn-sm btn-outline-success" id="addMaterial"><i class="bi bi-plus-lg"></i> adicionar material</button>
+
+              <div class="nav-subtitle mt-3">Mão de Obra</div>
+              <div id="laborList" class="vstack gap-2 mb-2"></div>
+              <button type="button" class="btn btn-sm btn-outline-success" id="addLabor"><i class="bi bi-plus-lg"></i> adicionar mão de obra</button>
+
+              <div class="nav-subtitle mt-3">Desconto</div>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <div class="input-group">
+                    <span class="input-group-text">R$</span>
+                    <input type="number" min="0" step="0.01" id="discount" class="form-control" placeholder="Valor de desconto" value="0">
+                  </div>
+                </div>
+                <div class="col-md-8 text-end">
+                  <div class="h6 m-0">Total estimado: <span id="estimatedTotal">R$ 0,00</span></div>
+                </div>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-brand">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    // ===== Helpers =====
+    function $(sel, ctx){ return (ctx||document).querySelector(sel); }
+    function $$(sel, ctx){ return Array.prototype.slice.call((ctx||document).querySelectorAll(sel)); }
+    function fmtMoney(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+
+    var API = '/api/budget-presets';
+
+    function apiJson(url, opts){
+      return fetch(url, opts || {}).then(function(r){
+        if(!r.ok){ return r.text().then(function(t){ throw new Error('HTTP '+r.status+' – '+(t||r.statusText)); }); }
+        // alguns backends retornam vazio no DELETE/PUT; trate isso:
+        var ct = r.headers.get('content-type')||'';
+        if(!ct.includes('application/json')) return {};
+        return r.json();
+      });
+    }
+
+    // ===== Normalizadores =====
+    function normalizeList(payload){
+      // aceita: [] | {data:[...]} | {items:[...]} | {results:[...]}
+      if(Array.isArray(payload)) return payload;
+      if(payload && Array.isArray(payload.data)) return payload.data;
+      if(payload && Array.isArray(payload.items)) return payload.items;
+      if(payload && Array.isArray(payload.results)) return payload.results;
+      return [];
+    }
+    function getId(obj){
+      return obj && (obj._id || obj.id || obj.uuid || obj.key || '');
+    }
+
+    // ===== Elements =====
+    var els = {
+      list: $('#presetList'),
+      search: $('#searchInput'),
+      clear: $('#clearFilters'),
+
+      kpiTotal: $('#kpiTotal'),
+      kpiMateriais: $('#kpiMateriais'),
+      kpiMaoObra: $('#kpiMaoObra'),
+      kpiTicket: $('#kpiTicket'),
+
+      modalEl: $('#presetModal'),
+      modalLabel: $('#presetModalLabel'),
+      form: $('#presetForm'),
+      presetId: $('#presetId'),
+      name: $('#presetName'),
+      materialsList: $('#materialsList'),
+      addMaterial: $('#addMaterial'),
+      laborList: $('#laborList'),
+      addLabor: $('#addLabor'),
+      discount: $('#discount'),
+      estimatedTotal: $('#estimatedTotal'),
+
+      collapseNav: $('#collapseNav')
+    };
+
+    // ===== Render =====
+    function card(preset){
+      var matsTotal = (preset.materials||[]).reduce(function(acc,x){ return acc + Number(x.pricePerM2||0); }, 0);
+      var laborTotal = (preset.labor||[]).reduce(function(acc,x){ return acc + Number(x.value||0); }, 0);
+      var total = Math.max(0, matsTotal + laborTotal - Number(preset.discount||0));
+
+      var topMaterials = (preset.materials||[]).slice(0,3).map(function(m){
+        return '<span class="chip"><i class="bi bi-box"></i> '+(m.name||'')+'</span>';
+      }).join('');
+
+      var topLabor = (preset.labor||[]).slice(0,2).map(function(l){
+        return '<span class="chip"><i class="bi bi-tools"></i> '+(l.name||'')+'</span>';
+      }).join('');
+
+      var id = getId(preset);
+
+      return ''
+      + '<div class="col-12 col-md-6 col-xl-4">'
+        + '<div class="subtle-box h-100 d-flex flex-column">'
+          + '<div class="d-flex align-items-start justify-content-between">'
+            + '<div>'
+              + '<div class="fw-bold">'+(preset.name||'')+'</div>'
+              + '<div class="text-muted small">'+((preset.materials||[]).length)+' materiais • '+((preset.labor||[]).length)+' mão de obra</div>'
+            + '</div>'
+            + '<div class="text-end">'
+              + '<div class="fw-semibold">'+fmtMoney(total)+'</div>'
+              + '<div class="text-muted small">estimado</div>'
+            + '</div>'
+          + '</div>'
+          + '<div class="mt-2">'
+            + '<div class="text-muted small">Principais itens</div>'
+            + '<div class="d-flex flex-wrap gap-2 mt-1">'
+              + topMaterials + topLabor
+            + '</div>'
+          + '</div>'
+          + '<div class="mt-auto pt-3 d-flex justify-content-end gap-2">'
+            + '<button class="btn btn-sm btn-outline-secondary" data-action="edit" data-id="'+id+'"><i class="bi bi-pencil"></i> Editar</button>'
+            + '<button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="'+id+'"><i class="bi bi-trash"></i> Excluir</button>'
+          + '</div>'
+        + '</div>'
+      + '</div>';
+    }
+
+    function renderList(dataRaw){
+      var data = normalizeList(dataRaw);
+      if(!data.length){
+        els.list.innerHTML = '<div class="text-center text-muted py-4">Nenhuma configuração encontrada.</div>';
+        return;
+      }
+      els.list.innerHTML = data.map(card).join('');
+    }
+
+    function updateKpis(dataRaw){
+      var data = normalizeList(dataRaw);
+      var total = data.length;
+      var mats = data.reduce(function(a,p){ return a + ((p.materials && p.materials.length) || 0); }, 0);
+      var labor = data.reduce(function(a,p){ return a + ((p.labor && p.labor.length) || 0); }, 0);
+
+      var tickets = data.map(function(p){
+        var m = (p.materials||[]).reduce(function(acc,x){ return acc + Number(x.pricePerM2||0); }, 0);
+        var l = (p.labor||[]).reduce(function(acc,x){ return acc + Number(x.value||0); }, 0);
+        return Math.max(0, m + l - Number(p.discount||0));
+      });
+
+      var avg = tickets.length ? tickets.reduce(function(a,b){return a+b;},0) / tickets.length : 0;
+
+      els.kpiTotal.textContent = total;
+      els.kpiMateriais.textContent = mats;
+      els.kpiMaoObra.textContent = labor;
+      els.kpiTicket.textContent = fmtMoney(avg);
+    }
+
+    // ===== Data =====
+    function fetchPresets(){
+      var q = (els.search && els.search.value) ? els.search.value.trim() : '';
+      var url = API;
+      if(q){
+        var params = new URLSearchParams();
+        params.set('search', q);
+        url = API + '?' + params.toString();           // só adiciona ? quando tem filtro
+      }
+      return apiJson(url);
+    }
+
+    function refresh(){
+      fetchPresets().then(function(data){
+        renderList(data);
+        updateKpis(data);
+      }).catch(function(err){
+        console.error(err);
+        els.list.innerHTML = '<div class="text-danger py-3">Erro ao carregar presets: '+err.message+'</div>';
+      });
+    }
+
+    // ===== Modal rows (sem m²) =====
+    function matRow(obj){
+      var name = (obj && obj.name) ? obj.name : '';
+      var price = (obj && typeof obj.pricePerM2 !== 'undefined') ? obj.pricePerM2 : 0;
+
+      var div = document.createElement('div');
+      div.className = 'row g-2';
+      div.innerHTML =
+        '<div class="col-md-8"><input type="text" class="form-control mat-name" placeholder="Nome do Material" value="'+name+'"></div>'
+      + '<div class="col-md-3"><div class="input-group"><span class="input-group-text">R$/m²</span><input type="number" step="0.01" min="0" class="form-control mat-price" value="'+price+'"></div></div>'
+      + '<div class="col-md-1 d-grid"><button type="button" class="btn btn-outline-danger remove-row" title="Remover"><i class="bi bi-x-lg"></i></button></div>';
+
+      div.querySelector('.remove-row').addEventListener('click', function(){ div.remove(); recalcTotal(); });
+      div.addEventListener('input', recalcTotal, true);
+      return div;
+    }
+
+    function laborRow(obj){
+      var name = (obj && obj.name) ? obj.name : '';
+      var val = (obj && typeof obj.value !== 'undefined') ? obj.value : 0;
+
+      var div = document.createElement('div');
+      div.className = 'row g-2';
+      div.innerHTML =
+        '<div class="col-md-7"><input type="text" class="form-control lab-name" placeholder="Mão de Obra" value="'+name+'"></div>'
+      + '<div class="col-md-4"><div class="input-group"><span class="input-group-text">R$</span><input type="number" step="0.01" min="0" class="form-control lab-value" value="'+val+'"></div></div>'
+      + '<div class="col-md-1 d-grid"><button type="button" class="btn btn-outline-danger remove-row" title="Remover"><i class="bi bi-x-lg"></i></button></div>';
+
+      div.querySelector('.remove-row').addEventListener('click', function(){ div.remove(); recalcTotal(); });
+      div.addEventListener('input', recalcTotal, true);
+      return div;
+    }
+
+    function getMaterials(){
+      return $$('.row', els.materialsList).map(function(r){
+        var n = $('.mat-name', r);
+        var p = $('.mat-price', r);
+        var name = n ? n.value.trim() : '';
+        var price = p ? Number(p.value || 0) : 0;
+        return name ? { name: name, pricePerM2: price } : null;
+      }).filter(function(x){ return !!x; });
+    }
+
+    function getLabor(){
+      return $$('.row', els.laborList).map(function(r){
+        var n = $('.lab-name', r);
+        var v = $('.lab-value', r);
+        var name = n ? n.value.trim() : '';
+        var val = v ? Number(v.value || 0) : 0;
+        return name ? { name: name, value: val } : null;
+      }).filter(function(x){ return !!x; });
+    }
+
+    function recalcTotal(){
+      var mats = getMaterials().reduce(function(acc,x){ return acc + Number(x.pricePerM2||0); }, 0);
+      var labs = getLabor().reduce(function(acc,x){ return acc + Number(x.value||0); }, 0);
+      var disc = Number(els.discount && els.discount.value ? els.discount.value : 0);
+      els.estimatedTotal.textContent = fmtMoney(Math.max(0, mats + labs - disc));
+    }
+
+    // ===== Actions =====
+    function onEdit(id){
+      if(!id){ alert('ID do preset não encontrado.'); return; }
+      apiJson(API + '/' + id).then(function(p){
+        // alguns backends retornam {data:{...}}
+        var preset = p && (p.data || p.item || p.result || p) || {};
+        els.presetId.value = getId(preset) || '';
+        els.name.value = preset.name || '';
+        els.discount.value = preset.discount || 0;
+
+        els.materialsList.innerHTML = '';
+        (preset.materials||[]).forEach(function(m){ els.materialsList.appendChild(matRow({ name: m.name, pricePerM2: m.pricePerM2 })); });
+
+        els.laborList.innerHTML = '';
+        (preset.labor||[]).forEach(function(l){ els.laborList.appendChild(laborRow(l)); });
+
+        recalcTotal();
+        els.modalLabel.textContent = 'Editar configuração';
+        bootstrap.Modal.getOrCreateInstance(els.modalEl).show();
+      }).catch(function(err){
+        console.error(err);
+        alert('Erro ao carregar preset para edição.');
+      });
+    }
+
+    function onDelete(id){
+      if(!id){ alert('ID do preset não encontrado.'); return; }
+      if(!confirm('Remover esta configuração?')) return;
+      fetch(API + '/' + id, { method: 'DELETE' })
+        .then(function(){ refresh(); })
+        .catch(function(err){ console.error(err); alert('Erro ao excluir preset.'); });
+    }
+
+    // ===== Event bindings =====
+    document.addEventListener('DOMContentLoaded', function(){
+      if(els.search){
+        els.search.addEventListener('input', function(){
+          clearTimeout(window.__tPreset);
+          window.__tPreset = setTimeout(refresh, 250);
+        });
+      }
+      if(els.clear){
+        els.clear.addEventListener('click', function(){
+          if(els.search) els.search.value = '';
+          refresh();
+        });
+      }
+      if(els.addMaterial){
+        els.addMaterial.addEventListener('click', function(){
+          els.materialsList.appendChild(matRow());
+          recalcTotal();
+        });
+      }
+      if(els.addLabor){
+        els.addLabor.addEventListener('click', function(){
+          els.laborList.appendChild(laborRow());
+          recalcTotal();
+        });
+      }
+      if(els.discount){
+        els.discount.addEventListener('input', recalcTotal);
+      }
+
+      // Delegação: editar / excluir
+      if(els.list){
+        els.list.addEventListener('click', function(e){
+          var btn = e.target.closest('button[data-action]');
+          if(!btn) return;
+          var id = btn.getAttribute('data-id');
+          var act = btn.getAttribute('data-action');
+          if(act === 'edit') onEdit(id);
+          if(act === 'delete') onDelete(id);
+        });
+      }
+
+      // Reset do modal ao fechar
+      if(els.modalEl){
+        els.modalEl.addEventListener('hidden.bs.modal', function(){
+          els.form.classList.remove('was-validated');
+          els.presetId.value = '';
+          els.name.value = '';
+          els.discount.value = 0;
+          els.materialsList.innerHTML = '';
+          els.laborList.innerHTML = '';
+          els.estimatedTotal.textContent = fmtMoney(0);
+          els.modalLabel.textContent = 'Nova configuração';
+        });
+      }
+
+      // Submit (criar/editar)
+      if(els.form){
+        els.form.addEventListener('submit', function(e){
+          e.preventDefault();
+          if(!els.form.checkValidity()){
+            els.form.classList.add('was-validated');
+            return;
+          }
+
+          var payload = {
+            name: (els.name && els.name.value) ? els.name.value.trim() : '',
+            materials: getMaterials(),
+            labor: getLabor(),
+            discount: Number(els.discount && els.discount.value ? els.discount.value : 0)
+          };
+
+          var id = els.presetId && els.presetId.value ? els.presetId.value : '';
+          var method = id ? 'PUT' : 'POST';
+          var url = id ? (API + '/' + id) : API;
+
+          fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+          .then(function(r){
+            if(!r.ok) return r.text().then(function(t){ throw new Error(t||('HTTP '+r.status)); });
+            // se o backend retornar json com objeto salvo, ignoramos e damos refresh
+            var ct = r.headers.get('content-type')||'';
+            return ct.includes('application/json') ? r.json().catch(function(){}) : null;
+          })
+          .then(function(){
+            bootstrap.Modal.getOrCreateInstance(els.modalEl).hide();
+            // zera busca para garantir que o novo apareça mesmo se filtro não bater
+            if(els.search) els.search.value = '';
+            refresh();
+          })
+          .catch(function(err){
+            console.error(err);
+            alert('Erro ao salvar preset: ' + err.message);
+          });
+        });
+      }
+
+      // Sidebar mini
+      if(els.collapseNav){
+        els.collapseNav.addEventListener('click', function(e){
+          e.preventDefault();
+          var sb = document.querySelector('.sidebar');
+          if(!sb) return;
+          sb.classList.toggle('mini');
+        });
+      }
+
+      // Primeira carga
+      refresh();
+    });
+  })();
+  </script>
+</body>
+</html>

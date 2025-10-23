@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>HABItar • Financeiro • Faturamento</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --brand-green:#22c55e;--brand-green-600:#16a34a;--brand-green-100:#e9f9ef;--brand-green-50:#f3fcf6;
+      --soft-gray:#f6f7f9;--surface:#fff;--border:#e9ecf1;--muted:#98a2b3;--text:#0f172a;
+      --grad-accent:linear-gradient(135deg, rgba(34,197,94,.12), rgba(34,197,94,.04));
+      --tap:46px; /* altura mínima amigável ao toque */
+    }
+    body{font-family:'Inter',system-ui;background:radial-gradient(900px 500px at 120% 10%,var(--brand-green-50),transparent),var(--soft-gray);color:var(--text)}
+
+    /* Sidebar */
+    .sidebar{position:fixed;inset:0 auto 0 0;width:280px;background:var(--surface);border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:10px;z-index:1030}
+    .sidebar.mini{width:88px;align-items:center}
+    .brand{font-weight:900;display:flex;align-items:center;gap:10px;font-size:1.25rem}
+    .brand .dot{width:10px;height:10px;border-radius:999px;background:var(--brand-green);box-shadow:0 0 0 6px var(--brand-green-100)}
+    .brand-text{display:inline}
+    .nav-subtitle{text-transform:uppercase;font-size:.72rem;color:var(--muted);margin:8px 0 4px;letter-spacing:.08em}
+    .nav-link-custom{border-radius:12px;padding:10px 12px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:12px;text-decoration:none;transition:transform .18s,background-color .25s,box-shadow .25s}
+    .nav-link-custom:hover{background:var(--brand-green-100);transform:translateX(2px);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .nav-link-custom.active{background:var(--grad-accent);box-shadow:inset 0 0 0 1px rgba(34,197,94,.25);text-decoration:none}
+    .divider{height:1px;background:var(--border);margin:10px 0}
+    .sidebar.mini .label, .sidebar.mini .nav-subtitle, .sidebar.mini .divider, .sidebar.mini #collapseNav .label{display:none!important}
+    .sidebar.mini .brand-text{display:none!important}
+    .sidebar.mini .nav-link-custom{justify-content:center;padding:10px}
+
+    /* Content */
+    .content{margin-left:280px;padding:28px}
+    .sidebar.mini ~ .content{margin-left:88px}
+
+    .btn,.form-control,.form-select,.input-group-text{min-height:var(--tap)} /* tocável */
+
+    .btn-brand{background:var(--brand-green);color:#fff;border:none;border-radius:12px;padding:.625rem 1rem}
+    .btn-brand:hover{background:var(--brand-green-600)}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px;height:100%}
+    .kpi-icon{width:40px;height:40px;border-radius:12px;background:var(--brand-green-100);display:grid;place-items:center;margin-bottom:8px}
+    .kpi-value{font-size:1.7rem;font-weight:900;letter-spacing:-.02em}
+    .kpi-label{color:var(--muted);font-size:.9rem;font-weight:600}
+
+    .toolbar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;position:sticky;top:12px;z-index:10}
+    .badge-soft{background:#f1f5f9;border:1px solid var(--border)}
+
+    .status-badge{padding:.35rem .6rem;border-radius:999px;font-weight:700;font-size:.78rem}
+    .st-Pago{background:#dcfce7;color:#15803d}
+    .st-A\ receber{background:#e0f2fe;color:#075985}
+    .st-Atrasado{background:#fff7ed;color:#b45309}
+
+    /* ===== Tablet Galaxy Tab S10 FE (820–1280px) ===== */
+    @media (min-width:820px) and (max-width:1280px){
+      .sidebar{ width:260px; padding:18px 14px; }
+      .sidebar.mini{ width:88px; }
+      .content{ margin-left:260px; padding:22px; }
+      .sidebar.mini ~ .content{ margin-left:88px; }
+      .kpi-card{ padding:16px; }
+      .toolbar{ padding:12px; }
+      .modal-dialog{ max-width:900px; }
+    }
+
+    /* ===== ≤ 992px: barra vira top, header/toolbar empilham ===== */
+    @media (max-width:992px){
+      .sidebar{position:sticky;top:0;width:100%;border-right:none;border-bottom:1px solid var(--border)}
+      .content{margin-left:0;padding:18px}
+      header{ row-gap:.5rem; }
+      header .d-flex.gap-2{ flex-wrap:wrap; }
+      header .btn{ flex:1 1 160px; } /* botões ocupam linha e crescem */
+      .toolbar{ top:0; border-radius:12px; }
+      .modal-dialog{ margin:.75rem; }
+      .table-responsive{ -webkit-overflow-scrolling:touch; }
+    }
+
+    /* ===== ≤ 768px: esconda MÉTODO (col 5) para caber melhor ===== */
+    @media (max-width:768px){
+      .table thead th:nth-child(5),
+      .table tbody td:nth-child(5){ display:none; }
+    }
+
+    /* ===== ≤ 576px: esconda MÉTODO (5) e CATEGORIA (3) ===== */
+    @media (max-width:576px){
+      .table thead th:nth-child(3),
+      .table tbody td:nth-child(3),
+      .table thead th:nth-child(5),
+      .table tbody td:nth-child(5){ display:none; }
+      .kpi-card{ padding:14px; }
+      .kpi-value{ font-size:1.45rem; }
+      .btn-group .btn{ padding:.35rem .55rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> <span class="brand-text">HABItar</span></div>
+    <div class="divider"></div>
+
+    <div class="nav-subtitle">Geral</div>
+    <a class="nav-link-custom" href="./dashboard.html"><i class="bi bi-speedometer"></i> <span class="label">Dashboard</span></a>
+    <a class="nav-link-custom" href="./index.html"><i class="bi bi-people"></i> <span class="label">Equipe</span></a>
+
+    <div class="nav-subtitle mt-2">Clientes</div>
+    <a class="nav-link-custom" href="./clientes-gerenciar.html"><i class="bi bi-person-lines-fill"></i> <span class="label">Gerenciar</span></a>
+
+    <div class="nav-subtitle mt-2">Obras</div>
+    <a class="nav-link-custom" href="./obras-gerenciar.html"><i class="bi bi-hammer"></i> <span class="label">Gerenciar</span></a>
+    <a class="nav-link-custom" href="./gerar-orcamento.html"><i class="bi bi-receipt"></i> <span class="label">Gerar Orçamento</span></a>
+
+    <div class="nav-subtitle mt-2">Financeiro</div>
+    <a class="nav-link-custom active" href="./financeiro-faturamento.html"><i class="bi bi-cash-coin"></i> <span class="label">Faturamento</span></a>
+    <a class="nav-link-custom" href="./financeiro-estatisticas.html"><i class="bi bi-graph-up-arrow"></i> <span class="label">Estatísticas</span></a>
+
+    <div class="divider"></div>
+    <a class="nav-link-custom" href="#" id="collapseNav"><i class="bi bi-chevron-left"></i> <span class="label">Recolher navbar</span></a>
+  </aside>
+
+  <!-- Conteúdo -->
+  <main class="content">
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h1 class="h3 mb-1">Faturamento</h1>
+        <div class="text-muted">Controle suas entradas e saídas, gere relatórios e acompanhe o fluxo do mês.</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-success" id="btnAddEntrada"><i class="bi bi-plus-circle"></i> Entrada</button>
+        <button class="btn btn-outline-danger" id="btnAddSaida"><i class="bi bi-dash-circle"></i> Saída</button>
+        <button class="btn btn-brand" id="btnExport"><i class="bi bi-download"></i> Exportar CSV</button>
+      </div>
+    </header>
+
+    <!-- KPIs -->
+    <section class="row g-3 mb-3">
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-cash-stack"></i></div><div class="kpi-value" id="kpiReceitaMes">R$ 0,00</div><div class="kpi-label">Receita (mês)</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-wallet2"></i></div><div class="kpi-value" id="kpiDespesaMes">R$ 0,00</div><div class="kpi-label">Despesas (mês)</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-clipboard-data"></i></div><div class="kpi-value" id="kpiSaldoMes">R$ 0,00</div><div class="kpi-label">Saldo (mês)</div></div></div>
+      <div class="col-12 col-lg-3"><div class="kpi-card"><div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div><div class="kpi-value" id="kpiAReceber">R$ 0,00</div><div class="kpi-label">A receber</div></div></div>
+    </section>
+
+    <!-- Toolbar -->
+    <section class="toolbar mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="form-label">Período</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+            <input type="date" class="form-control" id="fromDate">
+            <span class="input-group-text">até</span>
+            <input type="date" class="form-control" id="toDate">
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Status</label>
+          <select id="statusFilter" class="form-select">
+            <option value="">Todos</option>
+            <option>Pago</option>
+            <option>A receber</option>
+            <option>Atrasado</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label">Categoria</label>
+          <select id="categoryFilter" class="form-select">
+            <option value="">Todas</option>
+            <option>Projeto</option>
+            <option>Materiais</option>
+            <option>Mão de obra</option>
+            <option>Serviços</option>
+            <option>Taxas</option>
+            <option>Outros</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label">Buscar</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input id="q" type="text" class="form-control" placeholder="Descrição, método...">
+          </div>
+        </div>
+        <div class="col-6 col-md-1">
+          <button class="btn btn-outline-secondary w-100" id="btnClear"><i class="bi bi-x-circle"></i></button>
+        </div>
+        <div class="col-6 col-md-1">
+          <button class="btn btn-outline-primary w-100" id="btnApply"><i class="bi bi-arrow-repeat"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lista -->
+    <section class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Categoria</th>
+                <th>Descrição</th>
+                <th>Método</th>
+                <th>Status</th>
+                <th class="text-end">Valor</th>
+                <th class="text-end" style="width:140px">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody">
+              <tr><td colspan="8" class="text-center py-4 text-muted">Carregando…</td></tr>
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <th colspan="6" class="text-end">Totais do período:</th>
+                <th class="text-end">
+                  <span class="badge rounded-pill bg-success-subtle text-success me-2" id="ftIn">+ R$ 0,00</span>
+                  <span class="badge rounded-pill bg-danger-subtle text-danger" id="ftOut">- R$ 0,00</span>
+                </th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Paginação simples -->
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="small text-muted" id="pagerInfo">—</div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-secondary" id="prevPage"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn btn-sm btn-outline-secondary" id="nextPage"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal: Nova/Editar transação -->
+    <div class="modal fade" id="txModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="txModalLabel">Nova transação</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <form id="txForm" class="needs-validation" novalidate>
+            <div class="modal-body">
+              <input type="hidden" id="txId"/>
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label">Tipo</label>
+                  <select id="txType" class="form-select" required>
+                    <option value="Entrada">Entrada</option>
+                    <option value="Saída">Saída</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Data</label>
+                  <input type="date" id="txDate" class="form-control" required>
+                  <div class="invalid-feedback">Informe a data.</div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Valor (R$)</label>
+                  <input type="number" step="0.01" min="0" id="txAmount" class="form-control" required>
+                  <div class="invalid-feedback">Informe o valor.</div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Status</label>
+                  <select id="txStatus" class="form-select" required>
+                    <option>Pago</option>
+                    <option>A receber</option>
+                    <option>Atrasado</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Categoria</label>
+                  <select id="txCategory" class="form-select">
+                    <option>Projeto</option>
+                    <option>Materiais</option>
+                    <option>Mão de obra</option>
+                    <option>Serviços</option>
+                    <option>Taxas</option>
+                    <option>Outros</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Método de pagamento</label>
+                  <select id="txMethod" class="form-select">
+                    <option>Pix</option>
+                    <option>Boleto</option>
+                    <option>Cartão</option>
+                    <option>Transferência</option>
+                    <option>Dinheiro</option>
+                    <option>Outro</option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Descrição</label>
+                  <input type="text" id="txDesc" class="form-control" placeholder="Ex.: Entrada de cliente X, compra de cimento...">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Observações</label>
+                  <textarea id="txNotes" class="form-control" rows="2"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-brand" type="submit">Salvar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  (function(){
+    'use strict';
+
+    // ===== Helpers =====
+    function $(s,c){return (c||document).querySelector(s);}
+    function $$(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s));}
+    function api(url,opts){return fetch(url,opts||{}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error('HTTP '+r.status+' '+t)}); return r.json();});}
+    function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+    function ymd(d){const dt=new Date(d);const m=String(dt.getMonth()+1).padStart(2,'0');const day=String(dt.getDate()).padStart(2,'0');return dt.getFullYear()+'-'+m+'-'+day;}
+    function dateBR(d){try{return new Date(d).toLocaleDateString('pt-BR');}catch(_e){return '-';}}
+
+    // ===== Elements =====
+    const els = {
+      // KPIs
+      kpiReceitaMes: $('#kpiReceitaMes'),
+      kpiDespesaMes: $('#kpiDespesaMes'),
+      kpiSaldoMes: $('#kpiSaldoMes'),
+      kpiAReceber: $('#kpiAReceber'),
+
+      // Toolbar
+      fromDate: $('#fromDate'),
+      toDate: $('#toDate'),
+      statusFilter: $('#statusFilter'),
+      categoryFilter: $('#categoryFilter'),
+      q: $('#q'),
+      btnApply: $('#btnApply'),
+      btnClear: $('#btnClear'),
+
+      // Table / totals
+      tbody: $('#tbody'),
+      ftIn: $('#ftIn'),
+      ftOut: $('#ftOut'),
+      pagerInfo: $('#pagerInfo'),
+      prevPage: $('#prevPage'),
+      nextPage: $('#nextPage'),
+
+      // Actions
+      btnAddEntrada: $('#btnAddEntrada'),
+      btnAddSaida: $('#btnAddSaida'),
+      btnExport: $('#btnExport'),
+
+      // Modal
+      txModal: $('#txModal'),
+      txModalLabel: $('#txModalLabel'),
+      txForm: $('#txForm'),
+      txId: $('#txId'),
+      txType: $('#txType'),
+      txDate: $('#txDate'),
+      txAmount: $('#txAmount'),
+      txStatus: $('#txStatus'),
+      txCategory: $('#txCategory'),
+      txMethod: $('#txMethod'),
+      txDesc: $('#txDesc'),
+      txNotes: $('#txNotes'),
+
+      // Sidebar
+      collapseNav: $('#collapseNav')
+    };
+
+    // ===== API endpoints esperados =====
+    const API = {
+      list: '/api/finance/transactions',
+      summary: '/api/finance/summary?window=month'
+    };
+
+    // ===== State =====
+    const state = {
+      page: 1,
+      limit: 10,
+      total: 0,
+      rows: [], // página atual
+      filters: {
+        from: '',
+        to: '',
+        status: '',
+        category: '',
+        q: ''
+      }
+    };
+
+    // ===== Mock fallback (ZERADO) =====
+    function mockList(){
+      return Promise.resolve({ page:1, limit:10, total:0, data: [] });
+    }
+    function mockSummary(){
+      return Promise.resolve({
+        currentMonth: { income: 0, expense: 0, receivable: 0 },
+      });
+    }
+
+    // ===== Data =====
+    function fetchList(){
+      const p = new URLSearchParams();
+      if(state.filters.from) p.set('from', state.filters.from);
+      if(state.filters.to) p.set('to', state.filters.to);
+      if(state.filters.status) p.set('status', state.filters.status);
+      if(state.filters.category) p.set('category', state.filters.category);
+      if(state.filters.q) p.set('q', state.filters.q);
+      p.set('page', state.page); p.set('limit', state.limit);
+
+      return api(API.list + '?' + p.toString()).catch(()=> mockList());
+    }
+    function fetchSummary(){
+      return api(API.summary).catch(()=> mockSummary());
+    }
+
+    // ===== Render =====
+    function badgeStatus(st){
+      const cls = st==='Pago'?'st-Pago':(st==='A receber'?'st-A\\ receber':'st-Atrasado');
+      return '<span class="status-badge '+cls+'">'+st+'</span>';
+    }
+    function row(tx){
+      const sign = tx.type==='Entrada' ? 1 : -1;
+      const amount = sign * Number(tx.amount || 0);
+      const amountHtml = '<span class="'+(sign>0?'text-success':'text-danger')+'">'+ (sign>0?'+ ':'- ') + money(Math.abs(amount)) + '</span>';
+      return ''+
+      '<tr>'+
+        '<td>'+ dateBR(tx.date) +'</td>'+
+        '<td>'+ (tx.type||'—') +'</td>'+
+        '<td>'+ (tx.category||'—') +'</td>'+
+        '<td>'+ (tx.description||'—') +'</td>'+
+        '<td>'+ (tx.method||'—') +'</td>'+
+        '<td>'+ badgeStatus(tx.status||'—') +'</td>'+
+        '<td class="text-end">'+ amountHtml +'</td>'+
+        '<td class="text-end">'+
+          '<div class="btn-group">'+
+            '<button class="btn btn-sm btn-outline-secondary" data-act="edit" data-id="'+tx._id+'"><i class="bi bi-pencil"></i></button>'+
+            '<button class="btn btn-sm btn-outline-danger" data-act="del" data-id="'+tx._id+'"><i class="bi bi-trash"></i></button>'+
+          '</div>'+
+        '</td>'+
+      '</tr>';
+    }
+    function renderTable(list, page, limit, total){
+      if(!list.length){
+        els.tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum lançamento encontrado.</td></tr>';
+      }else{
+        els.tbody.innerHTML = list.map(row).join('');
+      }
+      els.pagerInfo.textContent = 'Página '+page+' • '+list.length+' de '+total+' lançamentos';
+      const totals = list.reduce((acc,tx)=>{
+        const val = Number(tx.amount||0); if(tx.type==='Entrada') acc.in += val; else acc.out += val; return acc;
+      }, {in:0,out:0});
+      els.ftIn.textContent = '+ ' + money(totals.in);
+      els.ftOut.textContent = '- ' + money(totals.out);
+    }
+    function renderKPIs(summary){
+      const inc = summary?.currentMonth?.income || 0;
+      const exp = summary?.currentMonth?.expense || 0;
+      const rec = summary?.currentMonth?.receivable || 0;
+      els.kpiReceitaMes.textContent = money(inc);
+      els.kpiDespesaMes.textContent = money(exp);
+      els.kpiSaldoMes.textContent = money(inc - exp);
+      els.kpiAReceber.textContent = money(rec);
+    }
+
+    // ===== Actions =====
+    function refresh(){
+      Promise.all([fetchList(), fetchSummary()]).then(function([listRes, sumRes]){
+        state.rows = listRes.data || [];
+        state.total = listRes.total || state.rows.length;
+        state.page = listRes.page || 1;
+        state.limit = listRes.limit || 10;
+        renderTable(state.rows, state.page, state.limit, state.total);
+        renderKPIs(sumRes);
+      }).catch(function(err){
+        console.error(err);
+        els.tbody.innerHTML = '<tr><td colspan="8" class="text-danger text-center py-4">Erro ao carregar.</td></tr>';
+      });
+    }
+
+    function openModal(type){
+      els.txModalLabel.textContent = 'Nova ' + (type==='Entrada'?'entrada':'saída');
+      els.txId.value = '';
+      els.txType.value = type;
+      els.txDate.value = ymd(new Date());
+      els.txAmount.value = '';
+      els.txStatus.value = type==='Entrada'?'Pago':'Pago';
+      els.txCategory.value = type==='Entrada'?'Projeto':'Materiais';
+      els.txMethod.value = 'Pix';
+      els.txDesc.value = '';
+      els.txNotes.value = '';
+      els.txForm.classList.remove('was-validated');
+      bootstrap.Modal.getOrCreateInstance(els.txModal).show();
+    }
+
+    function openEdit(id){
+      const tx = state.rows.find(x=>x._id===id);
+      if(!tx){ alert('Transação não encontrada.'); return; }
+      els.txModalLabel.textContent = 'Editar transação';
+      els.txId.value = tx._id;
+      els.txType.value = tx.type || 'Entrada';
+      els.txDate.value = tx.date ? ymd(tx.date) : ymd(new Date());
+      els.txAmount.value = Number(tx.amount||0);
+      els.txStatus.value = tx.status || 'Pago';
+      els.txCategory.value = tx.category || 'Outros';
+      els.txMethod.value = tx.method || 'Pix';
+      els.txDesc.value = tx.description || '';
+      els.txNotes.value = tx.notes || '';
+      els.txForm.classList.remove('was-validated');
+      bootstrap.Modal.getOrCreateInstance(els.txModal).show();
+    }
+
+    function saveTx(){
+      if(!els.txForm.checkValidity()){ els.txForm.classList.add('was-validated'); return; }
+      const payload = {
+        type: els.txType.value,
+        date: els.txDate.value,
+        amount: Number(els.txAmount.value||0),
+        status: els.txStatus.value,
+        category: els.txCategory.value,
+        method: els.txMethod.value,
+        description: els.txDesc.value.trim(),
+        notes: els.txNotes.value.trim()
+      };
+      const id = els.txId.value;
+      const url = id ? (API.list + '/' + id) : API.list;
+      const method = id ? 'PUT' : 'POST';
+      fetch(url, {method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+        .then(r=>r.json())
+        .catch(()=>({ok:true}))
+        .then(()=>{ bootstrap.Modal.getOrCreateInstance(els.txModal).hide(); refresh(); })
+        .catch(err=>{ console.error(err); alert('Erro ao salvar.'); });
+    }
+
+    function deleteTx(id){
+      if(!confirm('Excluir este lançamento?')) return;
+      fetch(API.list + '/' + id, { method:'DELETE' })
+        .then(()=> refresh())
+        .catch(()=>{
+          state.rows = state.rows.filter(x=>x._id!==id);
+          renderTable(state.rows, state.page, state.limit, Math.max(0,state.total-1));
+        });
+    }
+
+    function applyFilters(){
+      state.page = 1;
+      state.filters.from = els.fromDate.value || '';
+      state.filters.to = els.toDate.value || '';
+      state.filters.status = els.statusFilter.value || '';
+      state.filters.category = els.categoryFilter.value || '';
+      state.filters.q = els.q.value.trim();
+      refresh();
+    }
+
+    function clearFilters(){
+      els.fromDate.value = defaultFrom(); els.toDate.value = ymd(new Date());
+      els.statusFilter.value = ''; els.categoryFilter.value = ''; els.q.value = '';
+      applyFilters();
+    }
+
+    function defaultFrom(){
+      const d = new Date(); d.setDate(1); return ymd(d);
+    }
+
+    function exportCSV(){
+      const headers = ['Data','Tipo','Categoria','Descrição','Método','Status','Valor'];
+      const rows = state.rows.map(tx=>[
+        dateBR(tx.date), tx.type, tx.category, (tx.description||'').replace(/\n/g,' '), tx.method, tx.status, String(tx.amount).replace('.',',')
+      ]);
+      const csv = [headers].concat(rows).map(r=>r.map(f=>{
+        const s = String(f??''); if(s.includes(';')||s.includes('"')||s.includes('\n')) return '"' + s.replace(/"/g,'""') + '"';
+        return s;
+      }).join(';')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'faturamento.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ===== Pagination =====
+    function nextPage(){ state.page += 1; refresh(); }
+    function prevPage(){ state.page = Math.max(1, state.page - 1); refresh(); }
+
+    // ===== Init =====
+    document.addEventListener('DOMContentLoaded', function(){
+      els.fromDate.value = defaultFrom();
+      els.toDate.value = ymd(new Date());
+
+      els.btnApply.addEventListener('click', applyFilters);
+      els.btnClear.addEventListener('click', clearFilters);
+      els.q.addEventListener('keydown', function(e){ if(e.key==='Enter'){ applyFilters(); } });
+
+      els.tbody.addEventListener('click', function(e){
+        const btn = e.target.closest('button[data-act]'); if(!btn) return;
+        const id = btn.getAttribute('data-id'); const act = btn.getAttribute('data-act');
+        if(act==='edit') openEdit(id);
+        if(act==='del') deleteTx(id);
+      });
+
+      els.nextPage.addEventListener('click', nextPage);
+      els.prevPage.addEventListener('click', prevPage);
+
+      els.btnAddEntrada.addEventListener('click', function(){ openModal('Entrada'); });
+      els.btnAddSaida.addEventListener('click', function(){ openModal('Saída'); });
+      els.txForm.addEventListener('submit', function(ev){ ev.preventDefault(); saveTx(); });
+
+      els.btnExport.addEventListener('click', exportCSV);
+
+      const c = els.collapseNav;
+      if(c){ c.addEventListener('click', function(ev){ ev.preventDefault(); document.querySelector('.sidebar').classList.toggle('mini'); }); }
+
+      applyFilters();
+    });
+  })();
+  </script>
+</body>
+</html>
